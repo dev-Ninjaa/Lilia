@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0c0e;
+  --foreground: #f9fafb;
+  --accent-coral: #ff5533;
+  --accent-emerald: #14f195;
+  --accent-cyan: #06b6d4;
+  --surface: #12141a;
+  --surface-light: #e6ecef;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.18);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar for cyber-terminal look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0c0e;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e222d;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3142;
+}
+
+/* Ambient glow utility */
+.hero-glow {
+  background: radial-gradient(circle at 50% 30%, rgba(255, 85, 51, 0.12) 0%, rgba(11, 12, 14, 0) 70%);
+}
+
+.emerald-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(20, 241, 149, 0.15) 0%, rgba(11, 12, 14, 0) 70%);
+}
