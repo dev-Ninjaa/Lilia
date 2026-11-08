@@ -21,7 +21,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const activeCount = agents.filter((a) => a.status === "active").length;
   const executedCount = transactions.filter((t) => t.executionStatus === "EXECUTED").length;
-  const rejectedCount = transactions.filter((t) => t.executionStatus !== "EXECUTED").length;
+  const rejectedCount = transactions.filter(
+    (t) => t.executionStatus === "REJECTED_ON_CHAIN" || t.executionStatus === "REJECTED_BY_SENTINEL",
+  ).length;
+  const protectedVolume = transactions
+    .filter((t) => t.executionStatus === "EXECUTED")
+    .reduce((sum, t) => sum + t.amount, 0);
+  const mintLabel = transactions[0]?.mint
+    ? transactions[0].mint.length > 16
+      ? `${transactions[0].mint.slice(0, 8)}…${transactions[0].mint.slice(-4)}`
+      : transactions[0].mint
+    : "No transfers yet";
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -77,12 +87,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-white font-mono">
-              $148.5K
+              {protectedVolume.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </span>
-            <span className="text-xs text-neutral-500 font-mono">USDC-2022</span>
+            <span className="text-xs text-neutral-500 font-mono">Confirmed units</span>
           </div>
           <div className="mt-3 flex items-center gap-1 text-[11px] text-neutral-400 font-mono">
-            <span>Mint: Token22zP...M1nt</span>
+            <span>Mint: {mintLabel}</span>
           </div>
         </div>
 
@@ -116,7 +126,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs text-neutral-500 font-mono">Blocked Attacks</span>
           </div>
           <div className="mt-3 flex items-center gap-1 text-[11px] text-red-400 font-mono">
-            <span>$45,000 saved from drain</span>
+            <span>{rejectedCount} interceptions recorded</span>
           </div>
         </div>
       </div>

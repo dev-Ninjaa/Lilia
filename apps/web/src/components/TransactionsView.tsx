@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Transaction } from "../lib/types";
-import { Search, ExternalLink, ShieldCheck, ShieldAlert, CheckCircle2, XCircle, Code, Copy, Check } from "lucide-react";
+import { Search, ExternalLink, Code, Copy, Check } from "lucide-react";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -115,13 +115,13 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
                         tx.executionStatus === "EXECUTED"
                           ? "bg-emerald-500/20 text-[#14F195]"
+                          : tx.executionStatus === "PENDING"
+                          ? "bg-blue-500/20 text-blue-400"
                           : tx.executionStatus === "REJECTED_ON_CHAIN"
                           ? "bg-amber-500/20 text-amber-400"
                           : "bg-red-500/20 text-red-400"
                       }`}
                     >
-                      {tx.executionStatus === "EXECUTED" && <CheckCircle2 className="w-3 h-3" />}
-                      {tx.executionStatus !== "EXECUTED" && <XCircle className="w-3 h-3" />}
                       {tx.executionStatus}
                     </span>
                   </td>
@@ -170,6 +170,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                 className={`p-4 rounded-xl border flex items-center justify-between ${
                   selectedTx.executionStatus === "EXECUTED"
                     ? "bg-emerald-500/10 border-emerald-500/30 text-[#14F195]"
+                    : selectedTx.executionStatus === "PENDING"
+                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
                     : selectedTx.executionStatus === "REJECTED_ON_CHAIN"
                     ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
                     : "bg-red-500/10 border-red-500/30 text-red-400"
@@ -179,6 +181,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                   <div className="font-bold text-sm">
                     {selectedTx.executionStatus === "EXECUTED"
                       ? "Token-2022 Transfer Confirmed on Devnet"
+                      : selectedTx.executionStatus === "PENDING"
+                      ? "Prepared / submitted, awaiting confirmation"
                       : selectedTx.executionStatus === "REJECTED_ON_CHAIN"
                       ? "On-Chain Transfer Hook Reverted Transaction"
                       : "Sentinel Pre-emptively Blocked Transfer"}
@@ -192,20 +196,23 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
               {/* JSON Payload Inspection */}
               <div>
                 <div className="flex items-center justify-between text-neutral-400 mb-1">
-                  <span>Ed25519 Signed Permit Payload (v1.0 Standard):</span>
+                  <span>Transaction record (backend):</span>
                   <button
                     onClick={() =>
                       handleCopy(
                         JSON.stringify(
                           {
-                            protocol: "LILIA_V2",
-                            agent_id: selectedTx.agentId,
-                            max_amount: `${selectedTx.amount}000000`,
+                            id: selectedTx.id,
+                            status: selectedTx.backendStatus,
+                            flowVersion: selectedTx.flowVersion,
+                            agentId: selectedTx.agentId,
+                            permitId: selectedTx.permitId,
+                            amount: String(selectedTx.amount),
                             mint: selectedTx.mint,
                             recipient: selectedTx.recipient,
-                            nonce: 48201,
-                            expiry_slot: 314920412,
-                            sentinel_signature: selectedTx.permitSignature || "NONE",
+                            slot: selectedTx.slot,
+                            blockhash: selectedTx.blockhash,
+                            signature: selectedTx.txSignature ?? null,
                           },
                           null,
                           2
@@ -222,14 +229,17 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                 <pre className="p-3.5 rounded-xl bg-black/60 border border-white/[0.08] text-[#14F195] overflow-x-auto text-[11px] leading-relaxed">
 {JSON.stringify(
   {
-    protocol: "LILIA_V2",
-    agent_id: selectedTx.agentId,
-    max_amount: `${selectedTx.amount}000000`,
+    id: selectedTx.id,
+    status: selectedTx.backendStatus,
+    flowVersion: selectedTx.flowVersion,
+    agentId: selectedTx.agentId,
+    permitId: selectedTx.permitId,
+    amount: String(selectedTx.amount),
     mint: selectedTx.mint,
     recipient: selectedTx.recipient,
-    nonce: 48201,
-    expiry_slot: 314920412,
-    sentinel_signature: selectedTx.permitSignature || "NONE",
+    slot: selectedTx.slot,
+    blockhash: selectedTx.blockhash,
+    signature: selectedTx.txSignature ?? null,
   },
   null,
   2

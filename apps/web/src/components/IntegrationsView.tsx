@@ -1,13 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
-import { Terminal, Copy, Check, ExternalLink, Code2, Cpu, ArrowUpRight } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Copy, Check, Code2, Cpu } from "lucide-react";
+import { ApiError, integrationsStatus, solanaStatus } from "../lib/api";
+import type { IntegrationsStatus, SolanaStatus } from "../lib/api";
 
 export const IntegrationsView: React.FC = () => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [integrations, setIntegrations] = useState<IntegrationsStatus | null>(null);
+  const [solana, setSolana] = useState<SolanaStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([integrationsStatus(), solanaStatus()])
+      .then(([i, s]) => {
+        setIntegrations(i);
+        setSolana(s);
+      })
+      .catch((caught) => {
+        if (caught instanceof ApiError) setError(`${caught.code}: ${caught.message}`);
+        else setError("Could not load integration status.");
+      });
+  }, []);
 
   const handleCopy = (sec: string, text: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     setCopiedSection(sec);
     setTimeout(() => setCopiedSection(null), 2000);
   };
@@ -18,7 +35,7 @@ export const IntegrationsView: React.FC = () => {
       "command": "bunx",
       "args": ["@lilia/mcp-server"],
       "env": {
-        "LILIA_API_KEY": "lilia_sec_live_9xQ2dJ8vK4a1M",
+        "LILIA_API_KEY": "YOUR_LILIA_API_KEY",
         "SOLANA_NETWORK": "devnet"
       }
     }
@@ -29,12 +46,10 @@ export const IntegrationsView: React.FC = () => {
   -H "Authorization: Bearer YOUR_LILIA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "agentId": "agent-alpha-01",
-    "sender": "7FvB5hK...9q1X",
-    "recipient": "AgentBeta_3KmA9hR7z2p8L",
-    "mint": "Token22zP...M1ntUsdc92x4",
-    "amount": 500,
-    "purpose": "Liquidity pool rebalance"
+    "agentId": "<agent UUID>",
+    "recipient": "<recipient address>",
+    "mint": "<Token-2022 mint>",
+    "amount": "100"
   }'`;
 
   const mcpTools = [
@@ -96,9 +111,42 @@ export const IntegrationsView: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <span className="px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 font-mono text-xs font-bold">
-            Model Context Protocol Ready
+            MCP: {integrations?.mcp.status ?? "…"}
           </span>
         </div>
+      </div>
+
+      {/* Live status */}
+      <div className="rounded-2xl bg-[#111317] border border-white/[0.08] p-6 space-y-4">
+        <h3 className="text-base font-bold text-white">Live integration status</h3>
+        {error ? (
+          <p className="text-xs font-mono text-red-400">{error}</p>
+        ) : !integrations || !solana ? (
+          <p className="text-xs font-mono text-neutral-500">Loading status…</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+            <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3">
+              <div className="text-neutral-500 mb-1">Solana RPC</div>
+              <div className="text-white">{integrations.solanaRpc.status}</div>
+              <div className="text-neutral-400 mt-1">{integrations.solanaRpc.note}</div>
+              <div className="text-neutral-400 mt-1">
+                Program: {solana.programId} · Commitment: {solana.commitment}
+              </div>
+              <div className="text-neutral-400">
+                Sentinel: {solana.sentinelPublicKey ?? "not initialized"} · Slot: {solana.latestSlot ?? "—"}
+              </div>
+              <div className="text-neutral-400">Admin configured: {String(solana.adminConfigured)}</div>
+            </div>
+            <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3">
+              <div className="text-neutral-500 mb-1">Gemini</div>
+              <div className="text-white">{integrations.gemini.status}</div>
+              <div className="text-neutral-500 mt-2">Database</div>
+              <div className="text-white">{integrations.database.status}</div>
+              <div className="text-neutral-500 mt-2">MCP</div>
+              <div className="text-white">{integrations.mcp.status}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Model Context Protocol (MCP) Setup Box */}
@@ -110,7 +158,7 @@ export const IntegrationsView: React.FC = () => {
               Claude Desktop & Cursor MCP Configuration
             </h3>
             <p className="text-xs text-neutral-400">
-              Paste this configuration into your Claude Desktop or Cursor MCP settings to empower your agents with transaction security tools.
+              Paste this configuration into your Claude Desktop or Cursor MCP settings. The MCP server is not implemented yet — the backend reports `not_implemented`.
             </p>
           </div>
 
@@ -132,14 +180,14 @@ export const IntegrationsView: React.FC = () => {
         </pre>
       </div>
 
-      {/* 7 Core MVP MCP Tools Table */}
+      {/* MCP Tools Table (documented target, not implemented) */}
       <div className="rounded-2xl bg-[#111317] border border-white/[0.08] overflow-hidden">
         <div className="p-4 border-b border-white/[0.08] bg-black/40 flex items-center justify-between">
           <h3 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
             <Code2 className="w-4 h-4 text-[#FF5533]" />
-            Discovered MCP Tool Capabilities (Official TypeScript SDK)
+            Planned MCP Tool Capabilities
           </h3>
-          <span className="text-xs font-mono text-neutral-500">7 Core Tools Live</span>
+          <span className="text-xs font-mono text-neutral-500">Not implemented</span>
         </div>
 
         <div className="overflow-x-auto">

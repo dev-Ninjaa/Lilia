@@ -2,74 +2,105 @@
 
 import React, { useState } from "react";
 import { SIMULATION_SCENARIOS } from "../lib/mockData";
-import { SimulationScenario } from "../lib/types";
-import { Play, CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Terminal, ArrowRight, RefreshCw } from "lucide-react";
+import { Agent, Policy, SimulationScenario } from "../lib/types";
+import { ApiError, runSimulation } from "../lib/api";
+import { Play, CheckCircle2, XCircle, ShieldCheck, Terminal, RefreshCw } from "lucide-react";
 
-export const SimulationLab: React.FC = () => {
+interface SimulationLabProps {
+  agents?: Agent[];
+  policies?: Policy[];
+}
+
+type RunStatus = "IDLE" | "RUNNING" | "SUCCESS" | "REJECTED_SENTINEL";
+
+export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], policies = [] }) => {
   const [selectedScenario, setSelectedScenario] = useState<SimulationScenario>(SIMULATION_SCENARIOS[0]);
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const [status, setStatus] = useState<"IDLE" | "RUNNING" | "SUCCESS" | "REJECTED_SENTINEL" | "REJECTED_HOOK">("IDLE");
-  const [txHash, setTxHash] = useState<string | null>(null);
+  const [status, setStatus] = useState<RunStatus>("IDLE");
+  const [error, setError] = useState<string | null>(null);
 
-  const runScenario = (scenario: SimulationScenario) => {
+  const pickTargets = () => {
+    const agent = agents.find((a) => a.status === "active") ?? agents[0];
+    const policy =
+      (agent ? policies.find((p) => p.agentId === agent.id && p.status === "active") : undefined) ??
+      (agent ? policies.find((p) => p.agentId === agent.id) : undefined) ??
+      policies[0];
+    return { agent, policy };
+  };
+
+  const runScenario = async (scenario: SimulationScenario) => {
     setSelectedScenario(scenario);
+    setError(null);
     setIsRunning(true);
     setStatus("RUNNING");
     setLogs([]);
-    setTxHash(null);
-
     const append = (line: string) => setLogs((prev) => [...prev, line]);
 
-    append(`[0.00s] Initializing Lilia test harness for ${scenario.name}...`);
-    append(`[0.10s] Agent identity: ${scenario.agentId} | Intent: ${scenario.amount} USDC-2022 -> ${scenario.recipient.substring(0, 16)}...`);
+    const { agent, policy } = pickTargets();
+    append(`[0.00s] Initializing Lilia simulation harness for ${scenario.name}...`);
+    if (!agent || !policy) {
+      append("[0.10s] No active agent and policy are available. Register an agent and policy first.");
+      setError("No live agent/policy available for simulation.");
+      setIsRunning(false);
+      setStatus("IDLE");
+      return;
+    }
 
-    setTimeout(() => {
-      append(`[0.25s] Step 1: Sentinel intercepting transaction intent...`);
-      append(`[0.32s] Querying Drizzle Policy PDA: MaxCap=500.00 USDC, ReplayProtection=true`);
+    const allowedMint = policy.supportedMint.startsWith("Any")
+      ? "Token-2022-mint"
+      : policy.supportedMint;
+    const max = policy.maxTransferAmount;
 
-      if (scenario.id === "scenario-b") {
-        setTimeout(() => {
-          append(`[0.45s] ⚠️ ALERT: Amount (${scenario.amount} USDC) exceeds owner policy limit (500 USDC)!`);
-          append(`[0.52s] ⚠️ ALERT: Destination address is not in allowlist!`);
-          append(`[0.60s] ❌ SENTINEL EVALUATION: REJECTED (Risk Score: 98/100)`);
-          append(`[0.70s] Ed25519 Permit signature REFUSED. Authorization withheld.`);
-          append(`[0.85s] Malicious agent attempts raw transaction broadcast without permit...`);
-          append(`[1.05s] Solana Devnet Hook check: Token22Hook::Error(0x1770) - Missing Authorized Permit!`);
-          append(`[1.15s] 🛡️ CONSENSUS RESULT: TRANSACTION ROLLED BACK. ZERO TOKENS MOVED.`);
-          setIsRunning(false);
-          setStatus("REJECTED_SENTINEL");
-        }, 600);
-      } else if (scenario.id === "scenario-c") {
-        setTimeout(() => {
-          append(`[0.45s] Mocking off-chain service state (simulating compromised backend issuing permit)...`);
-          append(`[0.55s] Generated Mock Ed25519 Permit Signature: 7bK3vN1qL...R9p2`);
-          append(`[0.70s] Constructing Solana Devnet transaction with Ed25519 precompile instruction...`);
-          append(`[0.90s] Transaction broadcasted to Solana Devnet validators...`);
-          append(`[1.15s] Solana Token-2022 Transfer Hook executed on-chain.`);
-          append(`[1.25s] ❌ ON-CHAIN PDA CHECK: Transfer amount (5,000 USDC) violates on-chain contract limit!`);
-          append(`[1.35s] 🛡️ REVERT: Program Token22Hook returned error 0x1772 (MaxOnchainSpendExceeded).`);
-          append(`[1.40s] Blockchain consensus successfully overrode off-chain permit!`);
-          setIsRunning(false);
-          setStatus("REJECTED_HOOK");
-          setTxHash("3kX4c8M1qP9r7Z3v5B2n6T8y0U4i1O3p5A7s9D2f4G6h8J0k2L4z6X8c0V2b4N6M");
-        }, 600);
-      } else {
-        setTimeout(() => {
-          append(`[0.45s] ✓ Policy verified: Amount ${scenario.amount} USDC <= 500 cap.`);
-          append(`[0.55s] ✓ Destination verified: Allowlisted recipient.`);
-          append(`[0.65s] ✓ Generating cryptographic Ed25519 Permit (v1.0 Standard)...`);
-          append(`[0.75s] Sentinel Authority signed permit: 5zG7kPq9Xv2...L3m1`);
-          append(`[0.90s] Transaction constructed: [Ed25519 Verify IX] + [Token-2022 Transfer IX]`);
-          append(`[1.10s] Submitting to Solana Devnet RPC (Helius)...`);
-          append(`[1.35s] Token-2022 Transfer Hook successfully validated permit and instruction sysvar!`);
-          append(`[1.50s] 🎉 TRANSACTION CONFIRMED ON SOLANA DEVNET! Block: 314920415`);
-          setIsRunning(false);
-          setStatus("SUCCESS");
-          setTxHash("4yZ7b9N2vK1q8XpL3m4w5E6R7t8Y9u0I1o2P3a4S5d6F7g8H9j0K1l2Z3x4C5v6B");
-        }, 600);
+    let amount: string;
+    let recipient: string;
+    if (scenario.id === "scenario-b") {
+      amount = String(Math.max(scenario.amount, max * 10));
+      recipient = policy.blockedRecipients[0] ?? "unknown-recipient";
+    } else if (scenario.id === "scenario-c") {
+      amount = String(max * 5);
+      recipient = policy.allowedRecipients[0] ?? agent.agentPublicKey;
+    } else {
+      amount = String(Math.min(scenario.amount, max));
+      recipient = policy.allowedRecipients[0] ?? agent.agentPublicKey;
+    }
+
+    append(
+      `[0.10s] Agent: ${agent.name} (${agent.id}) | Policy: ${policy.name} (max ${max}) | Intent: ${amount} -> ${recipient}`,
+    );
+    append("[0.25s] Calling POST /api/simulation/run (off-chain Sentinel evaluation only)...");
+    try {
+      const result = await runSimulation({
+        agentId: agent.id,
+        policyId: policy.id,
+        recipient,
+        mint: allowedMint,
+        amount,
+      });
+      const decision = result.result;
+      append(`[0.50s] Sentinel decision: ${decision.decision.toUpperCase()} (risk ${decision.riskScore}/100, ${decision.riskLevel})`);
+      for (const reason of decision.reasons) {
+        append(`[0.60s]   - [${reason.severity}] ${reason.ruleId}: ${reason.message}`);
       }
-    }, 400);
+      append(`[0.70s] Blockchain execution: ${decision.blockchainExecution} (no on-chain broadcast).`);
+      if (scenario.id === "scenario-c") {
+        append("[0.80s] Note: Token-2022 hook enforcement is not exercised by /simulation/run. Use scripts/devnet for on-chain hook verification.");
+      }
+      append(
+        decision.approved
+          ? "[0.90s] RESULT: transfer would be approved off-chain; a permit could be requested next."
+          : "[0.90s] RESULT: transfer refused off-chain; no permit would be issued.",
+      );
+      setIsRunning(false);
+      setStatus(decision.approved ? "SUCCESS" : "REJECTED_SENTINEL");
+    } catch (caught) {
+      const message =
+        caught instanceof ApiError ? `${caught.code}: ${caught.message}` : "Simulation failed.";
+      append(`[0.60s] ERROR: ${message}`);
+      setError(message);
+      setIsRunning(false);
+      setStatus("IDLE");
+    }
   };
 
   return (
@@ -79,7 +110,7 @@ export const SimulationLab: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono font-semibold uppercase text-neutral-400">
-              48-Hour Hackathon Test Suite
+              Live sentinel evaluation
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
@@ -87,13 +118,13 @@ export const SimulationLab: React.FC = () => {
             Simulation Lab & Threat Demonstration
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
-            Execute real end-to-end scenarios demonstrating on-chain enforcement and drain prevention
+            Runs real off-chain Sentinel evaluations via POST /api/simulation/run. No on-chain execution is performed.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="px-3 py-1.5 rounded-full bg-[#111317] border border-white/[0.08] text-xs font-mono text-neutral-300">
-            Env: <span className="text-[#14F195] font-bold">Solana Devnet</span>
+            Env: <span className="text-[#14F195] font-bold">Lilia API</span>
           </span>
         </div>
       </div>
@@ -105,7 +136,7 @@ export const SimulationLab: React.FC = () => {
           return (
             <div
               key={sc.id}
-              onClick={() => runScenario(sc)}
+              onClick={() => void runScenario(sc)}
               className={`cursor-pointer rounded-2xl p-5 border transition-all flex flex-col justify-between ${
                 isCurrent
                   ? "bg-[#161820] border-[#ff6b4a] shadow-[0_0_24px_rgba(255,107,74,0.2)]"
@@ -138,7 +169,7 @@ export const SimulationLab: React.FC = () => {
               </div>
 
               <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between text-[11px] font-mono text-neutral-500">
-                <span>Amount: {sc.amount} USDC</span>
+                <span>Amount: {sc.amount} units</span>
                 <span className="text-[#ff6b4a] font-semibold flex items-center gap-1">
                   Run test →
                 </span>
@@ -157,7 +188,7 @@ export const SimulationLab: React.FC = () => {
             <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
             <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
             <span className="text-neutral-400 ml-2 text-[11px]">
-              sentinel-orchestrator-cli --scenario {selectedScenario.id}
+              sentinel-simulation-cli --scenario {selectedScenario.id}
             </span>
           </div>
 
@@ -165,11 +196,11 @@ export const SimulationLab: React.FC = () => {
             {isRunning && (
               <span className="flex items-center gap-1.5 text-xs text-[#ff6b4a] animate-pulse">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                Executing...
+                Evaluating...
               </span>
             )}
             <button
-              onClick={() => runScenario(selectedScenario)}
+              onClick={() => void runScenario(selectedScenario)}
               disabled={isRunning}
               className="px-3 py-1 rounded bg-[#ff6b4a] text-black font-bold text-xs hover:bg-[#ff856b] disabled:opacity-50 cursor-pointer"
             >
@@ -182,19 +213,17 @@ export const SimulationLab: React.FC = () => {
         <div className="min-h-[220px] max-h-[340px] overflow-y-auto space-y-1.5 text-neutral-300 pr-2">
           {logs.length === 0 ? (
             <div className="text-neutral-600 italic py-12 text-center">
-              Click any scenario card above or "Rerun Scenario" to trigger the live on-chain simulation suite.
+              Click any scenario card above or &quot;Rerun Scenario&quot; to run a live Sentinel simulation.
             </div>
           ) : (
             logs.map((line, idx) => (
               <div
                 key={idx}
                 className={
-                  line.includes("ALERT") || line.includes("REJECTED")
+                  line.includes("ERROR") || line.includes("refused")
                     ? "text-[#EF4444] font-bold"
-                    : line.includes("CONFIRMED") || line.includes("✓")
+                    : line.includes("approved") || line.includes("RESULT")
                     ? "text-[#14F195] font-semibold"
-                    : line.includes("CONSENSUS RESULT") || line.includes("REVERT")
-                    ? "text-amber-400 font-bold"
                     : "text-neutral-300"
                 }
               >
@@ -204,46 +233,34 @@ export const SimulationLab: React.FC = () => {
           )}
         </div>
 
+        {error && (
+          <div className="mt-4 pt-4 border-t border-neutral-800 font-mono text-xs text-red-400">{error}</div>
+        )}
+
         {/* Outcome Card Footer */}
         {status !== "IDLE" && !isRunning && (
           <div
             className={`mt-4 pt-4 border-t border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-              status === "SUCCESS"
-                ? "text-[#14F195]"
-                : status === "REJECTED_HOOK"
-                ? "text-amber-400"
-                : "text-red-400"
+              status === "SUCCESS" ? "text-[#14F195]" : "text-red-400"
             }`}
           >
             <div className="flex items-center gap-2 font-bold text-sm">
               {status === "SUCCESS" ? (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-[#14F195]" />
-                  <span>Scenario Verified: Protected Token-2022 Transfer Confirmed on Devnet!</span>
-                </>
-              ) : status === "REJECTED_HOOK" ? (
-                <>
-                  <ShieldCheck className="w-5 h-5 text-amber-400" />
-                  <span>Scenario Verified: Token-2022 Transfer Hook Reverted Unlawful Spend On-Chain!</span>
+                  <span>Simulation complete — Sentinel would approve (off-chain only).</span>
                 </>
               ) : (
                 <>
                   <XCircle className="w-5 h-5 text-red-400" />
-                  <span>Scenario Verified: Sentinel Intercepted and Prevented Wallet Drain!</span>
+                  <span>Simulation complete — Sentinel would reject (off-chain only).</span>
                 </>
               )}
             </div>
-
-            {txHash && (
-              <a
-                href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-mono underline hover:text-white"
-              >
-                View on Solana Explorer →
-              </a>
-            )}
+            <span className="text-[11px] text-neutral-500 flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              blockchainExecution: not_performed
+            </span>
           </div>
         )}
       </div>

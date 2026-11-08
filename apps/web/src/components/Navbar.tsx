@@ -77,6 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: "transactions", name: "Feed", url: "#", icon: Activity },
     { id: "threats", name: "Threats", url: "#", icon: AlertTriangle },
     { id: "simulation", name: "Simulate", url: "#", icon: Terminal },
+    { id: "integrations", name: "Integrate", url: "#", icon: Code2 },
   ];
 
   const brandSlot = (
@@ -110,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           }`}
         />
         <span className="hidden md:inline text-[11px]">
-          {walletConnected ? "9xQ2...dev" : "Connect"}
+          {walletConnected ? "API connected" : "Connect"}
         </span>
       </button>
 

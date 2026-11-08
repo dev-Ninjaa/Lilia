@@ -10,6 +10,11 @@ export interface Agent {
   totalTransferred: number;
   dailySpent: number;
   dailyCap: number;
+  description?: string;
+  transferAuthority?: string | null;
+  agentIdentityKey?: string | null;
+  onChainRegistryPda?: string | null;
+  authorizationSequence?: string;
 }
 
 export interface Policy {
@@ -28,6 +33,9 @@ export interface Policy {
   ttlSeconds: number;
   createdAt: string;
   updatedAt: string;
+  policyVersion?: number;
+  onChainPolicyPda?: string | null;
+  onChainPolicyVersion?: number;
 }
 
 export interface Transaction {
@@ -45,28 +53,27 @@ export interface Transaction {
   riskReason?: string;
   permitStatus: "ISSUED" | "NOT_ISSUED" | "EXPIRED";
   permitSignature?: string;
-  executionStatus: "EXECUTED" | "REJECTED_ON_CHAIN" | "REJECTED_BY_SENTINEL";
+  executionStatus: "EXECUTED" | "REJECTED_ON_CHAIN" | "REJECTED_BY_SENTINEL" | "PENDING";
   txSignature?: string;
   createdAt: string;
   hookErrorCode?: string;
+  backendStatus?: string;
+  flowVersion?: number;
+  permitId?: string | null;
+  slot?: string | null;
+  blockhash?: string | null;
+  failureReason?: string | null;
 }
 
 export interface SecurityEvent {
   id: string;
-  eventType: 
-    | "AGENT_REGISTERED" 
-    | "AGENT_DISABLED" 
-    | "POLICY_VIOLATED" 
-    | "PERMIT_ISSUED" 
-    | "HOOK_VALIDATION_PASSED" 
-    | "HOOK_VALIDATION_FAILED" 
-    | "DRAIN_ATTEMPT_BLOCKED";
-  severity: "critical" | "high" | "medium" | "low";
+  eventType: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
   agentId: string;
   agentName: string;
   description: string;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SimulationScenario {
