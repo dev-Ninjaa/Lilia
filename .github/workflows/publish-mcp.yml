@@ -1,23 +1,26 @@
+
 name: Publish MCP Package
 
 on:
   push:
     tags:
-      - 'mcp-v*.*.*'  # Triggers on tags like mcp-v0.1.0, mcp-v1.0.0, etc.
-  workflow_dispatch:  # Allows manual trigger from GitHub UI
+      - 'mcp-v*.*.*'
+  workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 0.1.0)'
+        description: 'Version to publish (e.g., 0.1.1)'
         required: true
         type: string
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+
     permissions:
-      contents: write  # create the release and its tag
-      packages: write  # Required for GitHub Packages
-      
+      contents: write
+      packages: write
+      id-token: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,8 +28,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -36,81 +40,88 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build MCP package
-        run: |
-          cd apps/mcp
-          npm run build
-
-      - name: Run tests (if any)
-        run: |
-          cd apps/mcp
-          npm run typecheck || echo "No typecheck script"
-
-      - name: Extract version from tag or input
+      - name: Extract version
         id: version
+        shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
           else
-            # Extract version from tag (e.g., mcp-v0.1.0 -> 0.1.0)
-            VERSION=${GITHUB_REF#refs/tags/mcp-v}
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            VERSION="${GITHUB_REF#refs/tags/mcp-v}"
           fi
 
-      - name: Update package.json version
-        run: |
-          cd apps/mcp
-          # npm version trips over the monorepo's workspace: deps, so edit the field directly
-          node -e "const f='package.json',p=JSON.parse(require('fs').readFileSync(f));p.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')" "${{ steps.version.outputs.VERSION }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
+            echo "Invalid version: $VERSION"
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update package version
+        working-directory: apps/mcp
+        run: npm pkg set version="${{ steps.version.outputs.VERSION }}"
+
+      - name: Build MCP package
+        working-directory: apps/mcp
+        run: npm run build
+
+      - name: Run typecheck
+        working-directory: apps/mcp
+        run: npm run typecheck --if-present
 
       - name: Publish to npm
-        run: |
-          cd apps/mcp
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: apps/mcp
+        run: npm publish --access public --provenance
 
       - name: Setup Node.js for GitHub Packages
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@dev-ninjaa'
+          package-manager-cache: false
 
       - name: Publish to GitHub Packages
-        run: |
-          cd apps/mcp
-          # Backup original package.json
-          cp package.json package.json.backup
-          # Update package name for GitHub Packages
-          node -e "const pkg=require('./package.json'); pkg.name='@dev-ninjaa/lilia-mcp'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
-          npm publish
-          # Restore original package.json
-          mv package.json.backup package.json
+        working-directory: apps/mcp
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp package.json package.json.backup
+
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json'));
+            pkg.name = '@dev-ninjaa/lilia-mcp';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+
+          npm publish --registry=https://npm.pkg.github.com
+
+          mv package.json.backup package.json
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: mcp-v${{ steps.version.outputs.VERSION }}
-          release_name: MCP v${{ steps.version.outputs.VERSION }}
+          name: MCP v${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
           body: |
             ## lilia-mcp v${{ steps.version.outputs.VERSION }}
-            
+
             ### Installation
+
             ```bash
             npm install -g lilia-mcp@${{ steps.version.outputs.VERSION }}
             ```
-            
+
             ### Setup
+
             ```bash
             npx lilia-mcp-setup
             ```
-            
+
             ### Changes
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/apps/mcp/CHANGELOG.md) for details.
-          draft: false
-          prerelease: false
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/apps/mcp/CHANGELOG.md).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
