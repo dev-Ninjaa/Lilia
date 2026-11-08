@@ -17,16 +17,29 @@ import Fastify from "fastify";
 
 export async function buildApp() {
   validateSigningConfiguration();
+  const redact = [
+    "req.headers.authorization",
+    "headers.authorization",
+    "LILIA_API_KEY",
+    "LILIA_SIGNING_PRIVATE_KEY",
+  ];
   const app = Fastify({
-    logger: {
-      level: env.NODE_ENV === "production" ? "info" : "debug",
-      redact: [
-        "req.headers.authorization",
-        "headers.authorization",
-        "LILIA_API_KEY",
-        "LILIA_SIGNING_PRIVATE_KEY",
-      ],
-    },
+    logger:
+      env.NODE_ENV === "production"
+        ? { level: "info", redact }
+        : {
+            level: "info",
+            transport: {
+              target: "pino-pretty",
+              options: {
+                colorize: true,
+                translateTime: "HH:MM:ss",
+                ignore: "pid,hostname",
+                singleLine: true,
+              },
+            },
+            redact,
+          },
     bodyLimit: 64 * 1024,
     trustProxy: false,
   });
