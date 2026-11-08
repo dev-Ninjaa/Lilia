@@ -1,19 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "LILIA — AI-Assisted On-Chain Transaction Security Infrastructure",
+  title: "LILIA — AI-Assisted On-Chain Transaction Security",
   description:
     "An on-chain security layer that protects autonomous AI agents from unauthorized and malicious token transfers through cryptographic Ed25519 permits and deterministic Solana Token-2022 Transfer Hook enforcement.",
 };
@@ -26,9 +29,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0B0C0E] text-[#F9FAFB]">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#07080a] text-[#ffffff]" style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+        {children}
+      </body>
     </html>
   );
 }
