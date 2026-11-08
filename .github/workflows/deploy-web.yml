@@ -1,0 +1,48 @@
+name: Deploy web (Vercel)
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/web/**", "bun.lock", ".github/workflows/deploy-web.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check Vercel secrets
+        id: gate
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "Vercel secrets are not set; skipping deploy."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 22
+      # Same flow as running `vercel` from apps/web locally; the project's Root Directory is unset.
+      - name: Pull Vercel settings
+        if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: npx vercel@65 pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build
+        if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: npx vercel@65 build --prod --token="$VERCEL_TOKEN"
+      - name: Deploy
+        if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: npx vercel@65 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
