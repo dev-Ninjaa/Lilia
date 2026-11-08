@@ -28,6 +28,8 @@
       "test-ledger/**",
       ".devnet",
       ".devnet/**",
+      ".turbo",
+      ".turbo/**",
       "apps/mcp/node_modules",
       "apps/mcp/node_modules/**",
       "apps/mcp/bun.lock",

@@ -13,7 +13,8 @@
       "recommended": true,
       "suspicious": { "noExplicitAny": "error", "noArrayIndexKey": "warn" },
       "a11y": {
-        "noLabelWithoutControl": "warn"
+        "noLabelWithoutControl": "warn",
+        "useSemanticElements": "warn"
       }
     }
   },
@@ -25,6 +26,8 @@
       ".next/**",
       ".vercel",
       ".vercel/**",
+      ".turbo",
+      ".turbo/**",
       "bun.lock",
       ".env.local.example"
     ]
