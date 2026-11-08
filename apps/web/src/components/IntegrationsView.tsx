@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Copy, Check, Code2, Cpu } from "lucide-react";
-import { ApiError, integrationsStatus, solanaStatus } from "../lib/api";
+import { ApiError, initializeSentinel, integrationsStatus, rotateSentinel, solanaStatus } from "../lib/api";
 import type { IntegrationsStatus, SolanaStatus } from "../lib/api";
 
 export const IntegrationsView: React.FC = () => {
@@ -10,6 +10,9 @@ export const IntegrationsView: React.FC = () => {
   const [integrations, setIntegrations] = useState<IntegrationsStatus | null>(null);
   const [solana, setSolana] = useState<SolanaStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [sentinelKey, setSentinelKey] = useState("");
 
   useEffect(() => {
     Promise.all([integrationsStatus(), solanaStatus()])
@@ -22,6 +25,24 @@ export const IntegrationsView: React.FC = () => {
         else setError("Could not load integration status.");
       });
   }, []);
+
+  const sentinelAction = async (action: "initialize" | "rotate") => {
+    setAdminBusy(true);
+    setAdminError(null);
+    try {
+      if (action === "initialize") await initializeSentinel(sentinelKey.trim());
+      else await rotateSentinel(sentinelKey.trim());
+      setSentinelKey("");
+      const [i, s] = await Promise.all([integrationsStatus(), solanaStatus()]);
+      setIntegrations(i);
+      setSolana(s);
+    } catch (caught) {
+      if (caught instanceof ApiError) setAdminError(`${caught.code}: ${caught.message}`);
+      else setAdminError("Sentinel administration failed.");
+    } finally {
+      setAdminBusy(false);
+    }
+  };
 
   const handleCopy = (sec: string, text: string) => {
     void navigator.clipboard.writeText(text);
@@ -147,6 +168,37 @@ export const IntegrationsView: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Sentinel administration */}
+      <div className="rounded-2xl bg-[#111317] border border-white/[0.08] p-6 space-y-4">
+        <h3 className="text-base font-bold text-white">Sentinel administration</h3>
+        <p className="text-xs text-neutral-400">
+          Initialize or rotate the on-chain SentinelAuthority. Signed by the configured admin keypair.
+        </p>
+        {adminError && <p className="text-xs font-mono text-red-400">{adminError}</p>}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            value={sentinelKey}
+            onChange={(e) => setSentinelKey(e.target.value)}
+            placeholder="Base58 Sentinel public key"
+            className="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
+          />
+          <button
+            onClick={() => void sentinelAction("initialize")}
+            disabled={adminBusy || !sentinelKey.trim()}
+            className="px-4 py-2 rounded-xl bg-[#FF5533] text-black font-semibold text-xs disabled:opacity-40 hover:bg-[#ff6847]"
+          >
+            Initialize
+          </button>
+          <button
+            onClick={() => void sentinelAction("rotate")}
+            disabled={adminBusy || !sentinelKey.trim()}
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs disabled:opacity-40"
+          >
+            Rotate
+          </button>
+        </div>
       </div>
 
       {/* Model Context Protocol (MCP) Setup Box */}

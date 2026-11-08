@@ -2,16 +2,18 @@
 
 import React, { useState } from "react";
 import { Policy } from "../lib/types";
-import { Shield, Plus, Lock, CheckCircle2, XCircle, Sliders, Clock, Key } from "lucide-react";
+import { Plus, Lock, Sliders } from "lucide-react";
 
 interface PoliciesViewProps {
   policies: Policy[];
   onCreatePolicy: (policy: Partial<Policy>) => void;
+  onPublishPolicy?: (policyId: string, mintDecimals: number) => void;
 }
 
 export const PoliciesView: React.FC<PoliciesViewProps> = ({
   policies,
   onCreatePolicy,
+  onPublishPolicy,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -19,6 +21,8 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
   const [dailyCap, setDailyCap] = useState(2500);
   const [allowedRecipients, setAllowedRecipients] = useState("");
   const [blockedRecipients, setBlockedRecipients] = useState("");
+  const [publishTarget, setPublishTarget] = useState<Policy | null>(null);
+  const [mintDecimals, setMintDecimals] = useState("6");
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,11 +161,80 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
 
             <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-neutral-500">
               <span>Token-2022 Transfer Hook</span>
-              <span className="text-neutral-400">Sync: PDA Verified</span>
+              <span className="text-neutral-400">
+                {policy.onChainPolicyPda ? `PDA v${policy.onChainPolicyVersion ?? 1}` : "Backend only"}
+              </span>
             </div>
+            {onPublishPolicy && (
+              <button
+                onClick={() => { setPublishTarget(policy); setMintDecimals("6"); }}
+                className="mt-3 w-full px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white font-mono text-xs border border-white/[0.12] transition-all"
+              >
+                {policy.onChainPolicyPda ? "Update on-chain" : "Publish on-chain"}
+              </button>
+            )}
           </div>
         ))}
       </div>
+
+      {/* Publish On-Chain Modal */}
+      {publishTarget && onPublishPolicy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-[#111317] border border-white/[0.15] p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[#FF5533]" />
+                {publishTarget.onChainPolicyPda ? "Update Policy on-chain" : "Publish Policy on-chain"}
+              </h3>
+              <button
+                onClick={() => setPublishTarget(null)}
+                className="text-neutral-400 hover:text-white text-lg font-mono"
+              >
+                ✕
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                onPublishPolicy(publishTarget.id, Number(mintDecimals) || 0);
+                setPublishTarget(null);
+              }}
+              className="space-y-4"
+            >
+              <p className="text-xs font-mono text-neutral-400">
+                Policy: {publishTarget.name} (max {publishTarget.maxTransferAmount}). Requires the agent to be registered on-chain.
+              </p>
+              <div>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">Mint decimals</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={18}
+                  required
+                  value={mintDecimals}
+                  onChange={(e) => setMintDecimals(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
+                />
+              </div>
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPublishTarget(null)}
+                  className="px-4 py-2 rounded-xl text-xs text-neutral-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#FF5533] text-black font-semibold text-xs hover:bg-[#ff6847] active:scale-[0.98] transition-all"
+                >
+                  Publish
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Create Policy Modal */}
       {isModalOpen && (

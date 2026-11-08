@@ -1,10 +1,15 @@
 # Frontend integration plan
 
 **Date:** November 8, 2026  
-**Status:** Implemented (Scope A + agent/policy write actions via the proxy).  
+**Status:** Implemented — full plan complete (Scope A + B + on-chain admin + transfer console).  
 **Goal:** Wire the existing Next.js dashboard (`apps/web`) to the real Lilia backend API and Solana v2 endpoints, replacing mock data with live data in stages.
 
-Implemented: `src/app/api/lilia/[...path]/route.ts` proxy (server-side bearer key), `src/lib/api.ts` client, `src/lib/mappers.ts` backend→view mapping, live Overview/Agents/Policies/Transactions/Threats/Integrations tabs, real Simulation Lab runs (off-chain only), and working agent register/disable + policy create. On-chain transfer from the UI remains out of scope until Devnet can be funded.
+Implemented:
+- `src/app/api/lilia/[...path]/route.ts` proxy (server-side bearer key).
+- Modular typed API layer in `src/lib/api/` (`client.api.ts`, `types.api.ts`, `agents.api.ts`, `policies.api.ts`, `transactions.api.ts`, `security.api.ts`, `solana.api.ts`, barrel `index.ts`).
+- `src/lib/mappers.ts` backend→view mapping; Transfer Console (evaluate → authorize v2 → prepare v2 → submit signed wire); agent register-on-chain, policy publish-on-chain, and Sentinel init/rotate admin surfaces.
+- Live Overview/Agents/Policies/Transactions/Threats/Integrations tabs; real Simulation Lab runs (off-chain only).
+- On-chain signing stays out of the browser: the user pastes a signed wire transaction for submit.
 
 ## Current state
 

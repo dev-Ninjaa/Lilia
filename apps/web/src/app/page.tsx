@@ -9,6 +9,7 @@ import { PoliciesView } from "../components/PoliciesView";
 import { TransactionsView } from "../components/TransactionsView";
 import { ThreatsView } from "../components/ThreatsView";
 import { SimulationLab } from "../components/SimulationLab";
+import { TransferConsole } from "../components/TransferConsole";
 import { IntegrationsView } from "../components/IntegrationsView";
 import { Footer } from "../components/Footer";
 import { Agent, Policy, Transaction, SecurityEvent } from "../lib/types";
@@ -21,7 +22,10 @@ import {
   listSecurityEvents,
   listTransactions,
   registerAgent,
+  registerAgentOnChain,
   setAgentStatusOnChain,
+  solanaStatus,
+  publishPolicyOnChain,
 } from "../lib/api";
 import { mapAgent, mapPolicy, mapSecurityEvent, mapTransaction } from "../lib/mappers";
 
@@ -47,12 +51,14 @@ export default function Home() {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [agentRows, policyRows, txRows, eventRows] = await Promise.all([
+      const [agentRows, policyRows, txRows, eventRows, status] = await Promise.all([
         listAgents(),
         listPolicies(),
         listTransactions(),
         listSecurityEvents(),
+        solanaStatus().catch(() => null),
       ]);
+      setWalletConnected(status?.configured ?? false);
       const mappedPolicies = policyRows.map(mapPolicy);
       const policyByAgent = new Map<string, string>();
       for (const policy of mappedPolicies) {
@@ -118,6 +124,29 @@ export default function Home() {
           agentData.agentPublicKey?.trim() || `web-agent-${Date.now()}`,
         metadata: agentData.agentId ? { agentId: agentData.agentId } : {},
       });
+      await load();
+    } catch (error) {
+      setActionError(errorMessage(error));
+    }
+  };
+
+  const handleRegisterOnChain = async (
+    agentId: string,
+    input: { transferAuthority: string; agentIdentityKey: string },
+  ) => {
+    setActionError(null);
+    try {
+      await registerAgentOnChain(agentId, input);
+      await load();
+    } catch (error) {
+      setActionError(errorMessage(error));
+    }
+  };
+
+  const handlePublishPolicy = async (policyId: string, mintDecimals: number) => {
+    setActionError(null);
+    try {
+      await publishPolicyOnChain(policyId, mintDecimals);
       await load();
     } catch (error) {
       setActionError(errorMessage(error));
@@ -206,6 +235,7 @@ export default function Home() {
                     policies={policies}
                     onToggleAgent={(id) => void handleToggleAgent(id)}
                     onRegisterAgent={(data) => void handleRegisterAgent(data)}
+                    onRegisterOnChain={(id, input) => void handleRegisterOnChain(id, input)}
                   />
                 )}
 
@@ -213,11 +243,16 @@ export default function Home() {
                   <PoliciesView
                     policies={policies}
                     onCreatePolicy={(data) => void handleCreatePolicy(data)}
+                    onPublishPolicy={(id, decimals) => void handlePublishPolicy(id, decimals)}
                   />
                 )}
 
                 {activeAppTab === "transactions" && (
                   <TransactionsView transactions={transactions} />
+                )}
+
+                {activeAppTab === "transfers" && (
+                  <TransferConsole agents={agents} policies={policies} onSubmitted={() => void load()} />
                 )}
 
                 {activeAppTab === "threats" && <ThreatsView events={events} />}

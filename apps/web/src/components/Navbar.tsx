@@ -13,6 +13,7 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  ArrowUpRight,
   Globe,
 } from "lucide-react";
 
@@ -75,6 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: "agents", name: "Agents", url: "#", icon: Users },
     { id: "policies", name: "Policies", url: "#", icon: Lock },
     { id: "transactions", name: "Feed", url: "#", icon: Activity },
+    { id: "transfers", name: "Transfers", url: "#", icon: ArrowUpRight },
     { id: "threats", name: "Threats", url: "#", icon: AlertTriangle },
     { id: "simulation", name: "Simulate", url: "#", icon: Terminal },
     { id: "integrations", name: "Integrate", url: "#", icon: Code2 },

@@ -2,13 +2,17 @@
 
 import React, { useState } from "react";
 import { Agent, Policy } from "../lib/types";
-import { Plus, Search, ShieldAlert, CheckCircle2, XCircle, Power, UserPlus, Copy, Check } from "lucide-react";
+import { Plus, Search, ShieldAlert, Power, UserPlus, Copy, Check } from "lucide-react";
 
 interface AgentsViewProps {
   agents: Agent[];
   policies: Policy[];
   onToggleAgent: (agentId: string) => void;
   onRegisterAgent: (agent: Partial<Agent>) => void;
+  onRegisterOnChain: (
+    agentId: string,
+    input: { transferAuthority: string; agentIdentityKey: string },
+  ) => void;
 }
 
 export const AgentsView: React.FC<AgentsViewProps> = ({
@@ -16,11 +20,17 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
   policies,
   onToggleAgent,
   onRegisterAgent,
+  onRegisterOnChain,
 }) => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "disabled">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // On-chain registration form state
+  const [onChainAgent, setOnChainAgent] = useState<Agent | null>(null);
+  const [transferAuthority, setTransferAuthority] = useState("");
+  const [agentIdentityKey, setAgentIdentityKey] = useState("");
 
   // New Agent Form State
   const [name, setName] = useState("");
@@ -34,13 +44,26 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const openOnChain = (agent: Agent) => {
+    setOnChainAgent(agent);
+    setTransferAuthority(agent.transferAuthority ?? "");
+    setAgentIdentityKey(agent.agentIdentityKey ?? "");
+  };
+
+  const submitOnChain = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onChainAgent) return;
+    onRegisterOnChain(onChainAgent.id, { transferAuthority, agentIdentityKey });
+    setOnChainAgent(null);
+  };
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !agentId) return;
     onRegisterAgent({
       name,
       agentId,
-      agentPublicKey: agentPubkey || `Agent_${Math.random().toString(36).substring(2, 9)}...Devnet`,
+      agentPublicKey: agentPubkey || `web-agent-${Date.now()}`,
       policyId: selectedPolicy,
       dailyCap: 1000,
       dailySpent: 0,
@@ -201,18 +224,29 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => onToggleAgent(agent.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.98] transition-all ${
-                          agent.status === "active"
-                            ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30"
-                            : "bg-emerald-500/10 hover:bg-emerald-500/20 text-[#14F195] border border-emerald-500/30"
-                        }`}
-                        title={agent.status === "active" ? "Emergency Kill Switch" : "Re-activate Agent"}
-                      >
-                        <Power className="w-3.5 h-3.5" />
-                        <span>{agent.status === "active" ? "Disable Agent" : "Enable Agent"}</span>
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => openOnChain(agent)}
+                          disabled={Boolean(agent.onChainRegistryPda)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.98] transition-all bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.15] disabled:opacity-40"
+                          title={agent.onChainRegistryPda ? `Registry ${agent.onChainRegistryPda}` : "Register AgentRegistry on-chain"}
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span>{agent.onChainRegistryPda ? "On-chain ✓" : "On-chain"}</span>
+                        </button>
+                        <button
+                          onClick={() => onToggleAgent(agent.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.98] transition-all ${
+                            agent.status === "active"
+                              ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30"
+                              : "bg-emerald-500/10 hover:bg-emerald-500/20 text-[#14F195] border border-emerald-500/30"
+                          }`}
+                          title={agent.status === "active" ? "Emergency Kill Switch" : "Re-activate Agent"}
+                        >
+                          <Power className="w-3.5 h-3.5" />
+                          <span>{agent.status === "active" ? "Disable Agent" : "Enable Agent"}</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -268,7 +302,7 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                 <label className="block text-xs font-mono text-neutral-400 mb-1">Agent Public Key (Solana Wallet)</label>
                 <input
                   type="text"
-                  placeholder="Leave blank to auto-generate Devnet test key"
+                  placeholder="Base58 public key (required for on-chain registration)"
                   value={agentPubkey}
                   onChange={(e) => setAgentPubkey(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
@@ -302,7 +336,68 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-[#FF5533] text-black font-semibold text-xs hover:bg-[#ff6847] active:scale-[0.98] transition-all"
                 >
-                  Register on Devnet
+                  Register agent
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Register On-Chain Modal */}
+      {onChainAgent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-[#111317] border border-white/[0.15] p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-[#FF5533]" />
+                Register AgentRegistry on-chain
+              </h3>
+              <button
+                onClick={() => setOnChainAgent(null)}
+                className="text-neutral-400 hover:text-white text-lg font-mono"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={submitOnChain} className="space-y-4">
+              <p className="text-xs font-mono text-neutral-400">
+                Agent: {onChainAgent.name} · Creates the AgentRegistry PDA signed by the configured admin keypair.
+              </p>
+              <div>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">Transfer authority (base58)</label>
+                <input
+                  type="text"
+                  required
+                  value={transferAuthority}
+                  onChange={(e) => setTransferAuthority(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">Agent identity key (base58)</label>
+                <input
+                  type="text"
+                  required
+                  value={agentIdentityKey}
+                  onChange={(e) => setAgentIdentityKey(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
+                />
+              </div>
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOnChainAgent(null)}
+                  className="px-4 py-2 rounded-xl text-xs text-neutral-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#FF5533] text-black font-semibold text-xs hover:bg-[#ff6847] active:scale-[0.98] transition-all"
+                >
+                  Register on-chain
                 </button>
               </div>
             </form>
