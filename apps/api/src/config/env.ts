@@ -32,6 +32,8 @@ const envSchema = z.object({
   LILIA_ADMIN_KEYPAIR_PATH: z.string().trim().optional().default(""),
   /** Inline Solana CLI keypair JSON (array of bytes). Prefer the path in production. */
   LILIA_ADMIN_KEYPAIR: z.string().trim().optional().default(""),
+  /** Devnet demo only: inline keypair JSON that /transactions/demo-sign uses to sign prepared transfers. */
+  LILIA_DEMO_TRANSFER_AUTHORITY: z.string().trim().optional().default(""),
   LILIA_PERMIT_TTL_SLOTS: z.coerce.number().int().min(1).max(10_000).default(300),
   /** Estimated slot time used to translate wall-clock expiries into slots. */
   LILIA_SLOT_TIME_MS: z.coerce.number().int().min(100).max(2_000).default(400),

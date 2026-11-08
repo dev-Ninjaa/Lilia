@@ -24,6 +24,7 @@ export {
 export { createPolicy, listPolicies, publishPolicyOnChain } from "@/lib/api/policies.api";
 export {
   authorizeV2,
+  demoSign,
   evaluate,
   listTransactions,
   prepareV2,

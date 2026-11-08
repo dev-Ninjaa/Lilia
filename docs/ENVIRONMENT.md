@@ -21,6 +21,7 @@ Validated at startup by `apps/api/src/config/env.ts`; an invalid value stops the
 | `SOLANA_RPC_COMMITMENT` | No | `confirmed` | `processed`, `confirmed` or `finalized`. |
 | `LILIA_PROGRAM_ID` | No | `51yqX5by...3FTbz` | Deployed program address. |
 | `LILIA_ADMIN_KEYPAIR_PATH` | For on-chain admin | empty | Path to the Solana keypair JSON that is the program upgrade authority. Prefer this over the inline form. |
+| `LILIA_DEMO_TRANSFER_AUTHORITY` | No | empty | Devnet demo only: inline keypair JSON used by `POST /api/transactions/demo-sign` so the Transfers page can sign without a wallet. Never set on mainnet. Secret. |
 | `LILIA_ADMIN_KEYPAIR` | No | empty | Inline keypair JSON alternative (CI/containers). Secret. |
 | `LILIA_SENTINEL_PUBLIC_KEY` | No | derived from signing key | Base58 key the on-chain `SentinelAuthority` trusts. |
 | `LILIA_PERMIT_TTL_SLOTS` | No | `300` | Permit lifetime in slots (1 to 10000). |

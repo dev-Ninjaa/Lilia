@@ -5,9 +5,11 @@ import { AgentService } from "@lilia/core/agent/agent.service.ts";
 import { AuthorizationService } from "@lilia/core/authorization/authorization.service.ts";
 import { EventService } from "@lilia/core/events/event.service.ts";
 import { newId, now, pageOffset } from "@lilia/core/shared.ts";
+import { currentSlot } from "@lilia/core/solana/onchain.service.ts";
+import { isSolanaConfigured } from "@lilia/core/solana/solana-client.ts";
 import { TransactionRepository } from "@lilia/core/transactions/transaction.repository.ts";
 import { agents, permits, policies, securityEvents, transactions } from "@lilia/db/schema/index.ts";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 
 type PrepareInput = {
   permitId: string;
@@ -177,10 +179,43 @@ export class TransactionService {
     };
   }
 
+  /** Mark unsettled transactions whose permit slot has passed: the hook rejects them on-chain. */
+  private async reconcileExpired() {
+    if (!isSolanaConfigured()) return;
+    let slot: bigint;
+    try {
+      slot = BigInt(await currentSlot());
+    } catch {
+      return; // RPC unreachable: leave statuses untouched.
+    }
+    const open = await this.db
+      .select({ id: transactions.id, permitId: permits.id, expiresAtSlot: permits.expiresAtSlot })
+      .from(transactions)
+      .innerJoin(permits, eq(transactions.permitId, permits.id))
+      .where(inArray(transactions.status, ["authorized", "prepared", "submitted"]));
+    for (const row of open) {
+      if (!row.expiresAtSlot || BigInt(row.expiresAtSlot) >= slot) continue;
+      await this.db
+        .update(transactions)
+        .set({
+          status: "failed",
+          errorCode: "PERMIT_EXPIRED",
+          failureReason: "Permit expired before a confirmed transfer was recorded.",
+          updatedAt: now(),
+        })
+        .where(eq(transactions.id, row.id));
+      await this.db
+        .update(permits)
+        .set({ status: "expired" })
+        .where(and(eq(permits.id, row.permitId), eq(permits.status, "issued")));
+    }
+  }
+
   async list(
     ownerId: string,
     query: { page: number; limit: number; agentId?: string; status?: string },
   ) {
+    await this.reconcileExpired();
     if (query.agentId) await this.agents.requireOwned(ownerId, query.agentId);
     const filters = [eq(agents.ownerId, ownerId)];
     if (query.agentId) filters.push(eq(transactions.agentId, query.agentId));

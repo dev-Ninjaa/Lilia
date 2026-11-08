@@ -29,5 +29,7 @@ services:
       - key: LILIA_SIGNING_PUBLIC_KEY
         sync: false
       # Optional: inline admin keypair JSON, only for on-chain admin endpoints.
+      - key: LILIA_DEMO_TRANSFER_AUTHORITY
+        sync: false
       - key: LILIA_ADMIN_KEYPAIR
         sync: false

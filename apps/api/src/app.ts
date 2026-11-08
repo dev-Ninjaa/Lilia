@@ -45,6 +45,16 @@ export async function buildApp() {
   });
   installErrorHandler(app);
   installRequestContext(app);
+  // Action endpoints (e.g. POST /agents/:id/disable) are called with a JSON content type and no body.
+  app.removeContentTypeParser("application/json");
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (_request, body, done) => {
+    if (!body) return done(null, {});
+    try {
+      done(null, JSON.parse(body as string));
+    } catch {
+      done(Object.assign(new Error("Invalid JSON body"), { statusCode: 400 }), undefined);
+    }
+  });
   await app.register(databasePlugin);
   await app.register(securityPlugin);
   app.addHook("preHandler", async (request) => {

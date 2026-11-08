@@ -6,6 +6,7 @@ import {
   type PermitV2,
   type PrepareV2Result,
   authorizeV2,
+  demoSign,
   evaluate,
   prepareV2,
   submitTransaction,
@@ -14,6 +15,9 @@ import type { Agent, Policy } from "@/lib/types";
 import { ArrowRight, CheckCircle2, RefreshCw, Terminal, XCircle } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
+
+// Devnet demo mint created by scripts/devnet/setup.ts (see docs/DEVNET_DEPLOYMENT.md).
+const DEMO_MINT = "3oJ5wNXd8rLddjFV6gNKkEjoRoDBKar1bVEhSwAeoWzZ";
 
 interface TransferConsoleProps {
   agents: Agent[];
@@ -46,13 +50,33 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
   const [signedTransaction, setSignedTransaction] = useState("");
   const [submittedSignature, setSubmittedSignature] = useState<string | null>(null);
 
-  const activeAgents = useMemo(() => agents.filter((a) => a.status === "active"), [agents]);
+  const activeAgents = useMemo(
+    () =>
+      agents
+        .filter((a) => a.status === "active")
+        .sort(
+          (a, b) =>
+            Number(policies.some((p) => p.agentId === b.id)) -
+            Number(policies.some((p) => p.agentId === a.id)),
+        ),
+    [agents, policies],
+  );
   const agentPolicies = useMemo(
     () => policies.filter((p) => p.agentId === (agentId || activeAgents[0]?.id)),
     [agentId, activeAgents, policies],
   );
   const effectiveAgentId = agentId || activeAgents[0]?.id || "";
-  const effectivePolicyId = policyId || agentPolicies[0]?.id || "";
+  const effectivePolicyId = agentPolicies.some((p) => p.id === policyId)
+    ? policyId
+    : (agentPolicies[0]?.id ?? "");
+  const selectedPolicy = agentPolicies.find((p) => p.id === effectivePolicyId);
+  const effectiveRecipient = recipient || selectedPolicy?.allowedRecipients[0] || "";
+  const effectiveMint =
+    mint ||
+    (selectedPolicy && !selectedPolicy.supportedMint.includes(" ")
+      ? selectedPolicy.supportedMint
+      : "") ||
+    DEMO_MINT;
 
   const reset = () => {
     setEvaluation(null);
@@ -70,8 +94,8 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
       const result = await evaluate({
         agentId: effectiveAgentId,
         policyId: effectivePolicyId || undefined,
-        recipient,
-        mint,
+        recipient: effectiveRecipient,
+        mint: effectiveMint,
         amount,
       });
       setEvaluation(result);
@@ -112,12 +136,26 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
       const result = await prepareV2({
         permitId: permit.id,
         sender: permit.transferAuthority,
-        recipient,
-        mint,
+        recipient: effectiveRecipient,
+        mint: effectiveMint,
         amount,
       });
       setPrepared(result);
       setSubmittedSignature(null);
+    } catch (caught) {
+      setError(errorMessage(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const stepDemoSign = async () => {
+    if (!prepared) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await demoSign({ transaction: prepared.transaction });
+      setSignedTransaction(result.signedTransaction);
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {
@@ -191,6 +229,11 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
             }}
             className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           >
+            {agentPolicies.length === 0 && (
+              <option value="" className="bg-[#111317]">
+                No policy for this agent: create one in Policies
+              </option>
+            )}
             {agentPolicies.map((p) => (
               <option key={p.id} value={p.id} className="bg-[#111317]">
                 {p.name} (max {p.maxTransferAmount})
@@ -212,7 +255,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
         <label className="space-y-1 md:col-span-2">
           <span className="text-xs font-mono text-neutral-400">Recipient</span>
           <input
-            value={recipient}
+            value={effectiveRecipient}
             onChange={(e) => {
               setRecipient(e.target.value);
               reset();
@@ -224,7 +267,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
         <label className="space-y-1">
           <span className="text-xs font-mono text-neutral-400">Mint</span>
           <input
-            value={mint}
+            value={effectiveMint}
             onChange={(e) => {
               setMint(e.target.value);
               reset();
@@ -257,7 +300,14 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
             <button
               type="button"
               onClick={() => void stepEvaluate()}
-              disabled={busy || !effectiveAgentId || !recipient || !mint || !amount}
+              disabled={
+                busy ||
+                !effectiveAgentId ||
+                !effectivePolicyId ||
+                !effectiveRecipient ||
+                !effectiveMint ||
+                !amount
+              }
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF5533] text-black font-bold text-xs disabled:opacity-40 hover:bg-[#ff856b]"
             >
               {busy && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
@@ -360,6 +410,14 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => void stepDemoSign()}
+            disabled={busy || !prepared}
+            className="px-3 py-1.5 rounded-lg border border-white/[0.12] text-xs font-semibold text-white disabled:opacity-40 hover:bg-white/[0.06]"
+          >
+            Sign with demo authority (devnet)
+          </button>
           <textarea
             value={signedTransaction}
             onChange={(e) => setSignedTransaction(e.target.value)}

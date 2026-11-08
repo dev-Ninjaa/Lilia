@@ -38,3 +38,6 @@ export const recordSubmission = (input: {
   permitId: string;
   transactionSignature: string;
 }) => request<SubmitResult>("POST", "/v2/transactions/record-submission", input);
+
+export const demoSign = (input: { transaction: string }) =>
+  request<{ signedTransaction: string }>("POST", "/transactions/demo-sign", input);
