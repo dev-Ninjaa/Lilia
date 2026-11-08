@@ -1,272 +1,446 @@
 "use client";
 
 import React from "react";
-import { ArrowUpRight, ShieldCheck, Zap, Lock, Cpu, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Terminal, Shield, Sparkles, Code2 } from "lucide-react";
 
-interface HeroSectionProps {
-  onLaunchSimulation: () => void;
-  onExploreAgents: () => void;
+/* ─── Inline SVG glyphs ─────────────────────────────────────── */
+function SearchGlyph() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({
-  onLaunchSimulation,
-  onExploreAgents,
-}) => {
+function DeployIcon() {
   return (
-    <section className="relative pt-12 pb-16 px-4 md:px-8 max-w-7xl mx-auto w-full">
-      {/* Background Subtle Radial Glow matching mockup */}
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-[#FF5533]/15 via-[#FF5533]/5 to-transparent blur-3xl pointer-events-none rounded-full" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="16 16 12 12 8 16" />
+      <line x1="12" y1="12" x2="12" y2="21" />
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+    </svg>
+  );
+}
 
-      {/* Hero Headline & Intro */}
-      <div className="relative text-center max-w-4xl mx-auto flex flex-col items-center">
-        {/* Section Pill Badge matching mockup: 01 [ About * Network ] */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#16181F] border border-white/[0.08] text-xs mb-6">
-          <span className="text-[#FF5533] font-mono font-bold">01</span>
-          <span className="text-neutral-400">|</span>
-          <span className="text-neutral-300 font-medium flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#FF5533]"></span>
-            AI-Assisted Transaction Security Protocol
+function ShieldIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function OpenIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+function KeyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+    </svg>
+  );
+}
+
+/* ─── SVG Film Grain Filter ─────────────────────────────────── */
+function FilmGrain() {
+  return (
+    <svg
+      style={{ position: "absolute", width: 0, height: 0 }}
+      aria-hidden="true"
+    >
+      <defs>
+        <filter id="film-grain">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.65"
+            numOctaves="3"
+            stitchTiles="stitch"
+          />
+          <feColorMatrix type="saturate" values="0" />
+          <feBlend in="SourceGraphic" mode="overlay" result="blend" />
+          <feComposite in="blend" in2="SourceGraphic" operator="in" />
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
+/* ─── Component ─────────────────────────────────────────────── */
+interface HeroSectionProps {
+  onLaunchApp: () => void;
+}
+
+export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
+  return (
+    <section
+      className="relative flex flex-col items-center justify-start overflow-hidden pt-28 pb-20 px-4 md:px-8"
+      style={{ minHeight: "100dvh", background: "#07080a" }}
+    >
+      {/* Film grain SVG filter definition */}
+      <FilmGrain />
+
+      {/* Living Animated Aurora light-blades */}
+      <div className="aurora-bg" aria-hidden="true">
+        <div className="aurora-blade aurora-blade-1" />
+        <div className="aurora-blade aurora-blade-2" />
+        <div className="aurora-blade aurora-blade-3" />
+        <div className="aurora-blade aurora-blade-4" />
+        <div className="aurora-blade aurora-blade-5" />
+
+        {/* SVG film-grain overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0.08,
+            filter: "url(#film-grain)",
+            background: "rgba(255,255,255,0.03)",
+            zIndex: 5,
+            pointerEvents: "none",
+          }}
+        />
+      </div>
+
+      {/* Hero content */}
+      <div className="relative z-10 flex flex-col items-center text-center w-full max-w-4xl mx-auto">
+        {/* Eyebrow chip: Paul Graham insight prompt */}
+        <div
+          className="inline-flex items-center gap-2 mb-6"
+          style={{
+            padding: "5px 14px",
+            borderRadius: "999px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #ffb347, #ff2f3a)",
+              display: "inline-block",
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              color: "#e2e8f0",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "0.02em",
+              fontFamily: "var(--font-geist-mono), monospace",
+            }}
+          >
+            Solana Token-2022 Transfer Hook Architecture
           </span>
         </div>
 
-        {/* Master Headline with Inline Badges matching mockup */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] mb-6">
-          Next level of{" "}
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5533] text-black font-semibold text-2xl sm:text-4xl md:text-5xl align-middle mx-1 shadow-[0_0_24px_rgba(255,85,51,0.3)]">
-            <span className="text-lg sm:text-2xl font-black">*</span> AI Agent
-          </span>{" "}
-          security & on-chain firewall{" "}
-          <span className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#FF5533]/20 border border-[#FF5533]/40 text-[#FF5533] align-middle mx-1">
-            +
+        {/* H1 — Paul Graham 30-year veteran pitch */}
+        <h1
+          className="hero-headline"
+          style={{
+            fontSize: "clamp(38px, 5.5vw, 64px)",
+            fontWeight: 600,
+            lineHeight: 1.1,
+            color: "#ffffff",
+            maxWidth: 820,
+            marginBottom: 22,
+            letterSpacing: "-0.025em",
+          }}
+        >
+          Signatures prove who signed.{" "}
+          <br className="hidden sm:inline" />
+          Not whether they were{" "}
+          <span
+            style={{
+              background: "linear-gradient(135deg, #ffb347 0%, #ff6b4a 50%, #ff2f3a 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            deceived
           </span>
+          .
         </h1>
 
-        <p className="text-neutral-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-8">
-          Autonomous agents can sign transactions, but signatures do not guarantee safety. 
-          Lilia enforces spending limits and threat containment through cryptographically signed 
-          permits and deterministic <span className="text-white font-medium">Token-2022 Transfer Hooks</span> on Solana.
+        {/* Subtitle: Paul Graham framing on why unchecked agent keys are lethal */}
+        <p
+          style={{
+            fontSize: 17,
+            fontWeight: 400,
+            color: "rgba(255,255,255,0.65)",
+            lineHeight: 1.65,
+            maxWidth: 640,
+            marginBottom: 32,
+            letterSpacing: "0.005em",
+          }}
+        >
+          When you hand an autonomous AI agent an unbounded private key, you haven&apos;t built
+          an independent operator—you&apos;ve given root treasury access to software susceptible to prompt injection.
+          Lilia enforces mathematical spending caps and recipient allowlists directly on the validator level.
         </p>
 
-        {/* Dual Primary Call-to-Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-14">
-          <button
-            onClick={onLaunchSimulation}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#FF5533] text-black font-semibold text-sm hover:bg-[#ff6847] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(255,85,51,0.25)]"
+        {/* PURPOSEFUL PRIMARY ACTIONS (Explore Protocol moved above!) */}
+        <div className="flex flex-wrap items-center justify-center gap-3.5 mb-5">
+          <a
+            href="#problem"
+            className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-semibold transition-all active:scale-[0.98]"
+            style={{
+              background: "#e6e6e6",
+              color: "#18181b",
+              boxShadow:
+                "0 0 0 1.5px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.18)",
+            }}
           >
-            <span>Run Hackathon Simulation</span>
-            <ArrowUpRight className="w-4 h-4 text-black stroke-[2.5]" />
-          </button>
-          <button
-            onClick={onExploreAgents}
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#16181F] text-white border border-white/[0.12] hover:border-white/[0.25] text-sm font-medium active:scale-[0.98] transition-all"
+            <Shield className="w-4 h-4 text-[#ff2f3a]" />
+            <span>Explore The Protocol</span>
+            <ArrowRight className="w-4 h-4 text-neutral-600 group-hover:translate-x-0.5 transition-transform" />
+          </a>
+
+          <a
+            href="#simulation"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-all active:scale-[0.98]"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.14)",
+              backdropFilter: "blur(12px)",
+            }}
           >
-            <span>Explore Active Sentinel Agents</span>
+            <Terminal className="w-4 h-4 text-[#ffb347]" />
+            <span>Run Simulation Lab</span>
+          </a>
+
+          <button
+            onClick={onLaunchApp}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-all active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,107,74,0.18), rgba(255,47,58,0.1))",
+              color: "#ff6b4a",
+              border: "1px solid rgba(255,107,74,0.35)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <Sparkles className="w-4 h-4 text-[#ff6b4a]" />
+            <span>Open Sentinel App</span>
           </button>
         </div>
 
-        {/* Metrics Ribbon matching mockup (93m+ Total locked, 3.2b Market size, 1k+ Awards, 221k Transactions) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl pt-6 border-t border-white/[0.08] mb-16">
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white font-mono tracking-tight">
-              $93M+
-            </span>
-            <span className="text-xs text-neutral-400 mt-1 uppercase tracking-wider font-mono">
-              Protected Volume
-            </span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#14F195] font-mono tracking-tight">
-              3.2K
-            </span>
-            <span className="text-xs text-neutral-400 mt-1 uppercase tracking-wider font-mono">
-              Active Agents
-            </span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white font-mono tracking-tight">
-              &lt;10ms
-            </span>
-            <span className="text-xs text-neutral-400 mt-1 uppercase tracking-wider font-mono">
-              Sentinel Latency
-            </span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#FF5533] font-mono tracking-tight">
-              221K+
-            </span>
-            <span className="text-xs text-neutral-400 mt-1 uppercase tracking-wider font-mono">
-              Verified Permits
-            </span>
-          </div>
-        </div>
-      </div>
+        {/* GeistMono install/spec caption */}
+        <p
+          style={{
+            fontFamily: "var(--font-geist-mono), monospace",
+            fontSize: 12,
+            color: "#9c9c9d",
+            marginBottom: 42,
+            letterSpacing: "0.01em",
+          }}
+        >
+          <span style={{ opacity: 0.7 }}>bunx @lilia/mcp-server</span>
+          <span style={{ opacity: 0.35, margin: "0 10px" }}>·</span>
+          <span style={{ opacity: 0.6 }}>Deterministic Solana Token-2022 Transfer Hook</span>
+        </p>
 
-      {/* 3-Column Illustrated Feature Grid matching the * Network Mockup */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch max-w-6xl mx-auto mb-20">
-        {/* Left Card: Constant Monitoring */}
-        <div className="group rounded-3xl bg-[#E6ECEF] p-6 text-black flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[360px] border border-white/20">
-          <div className="flex items-center justify-between mb-4">
-            <span className="px-3 py-1 rounded-full bg-black/10 text-xs font-semibold uppercase tracking-wider">
-              24/7 Telemetry
-            </span>
-            <ShieldCheck className="w-5 h-5 text-black" />
-          </div>
-
-          {/* Abstract Network Visual matching mockup */}
-          <div className="my-auto py-6">
-            <div className="w-full h-32 rounded-2xl bg-white p-3 flex flex-col justify-between border border-black/5 shadow-inner">
-              <div className="flex items-center justify-between border-b border-black/5 pb-2">
-                <span className="text-[11px] font-mono text-neutral-600">solana::transfer_hook::active</span>
-                <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-              </div>
-              <div className="space-y-1.5 font-mono text-[10px] text-neutral-700">
-                <div className="flex justify-between">
-                  <span>Agent Alpha Velocity:</span>
-                  <span className="font-bold text-black">450 / 1000 USDC</span>
-                </div>
-                <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#FF5533] h-full w-[45%]"></div>
-                </div>
-                <div className="text-[9px] text-neutral-500 flex justify-between">
-                  <span>Replay Nonce: #48201</span>
-                  <span>TTL: 60s valid</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-bold text-black tracking-tight mb-1">
-              Constant monitoring
-            </h3>
-            <p className="text-neutral-600 text-xs leading-relaxed">
-              Every token transfer intent is evaluated before transaction broadcast against owner policies, spending velocity, and destination allowlists.
-            </p>
-          </div>
-        </div>
-
-        {/* Center Split Column: Coral Action Tile + AI-Based Detection Card */}
-        <div className="flex flex-col gap-6">
-          {/* Top Coral Action Tile matching mockup: "SHARE IT / RUN" */}
+        {/* Dark-glass command bar / launcher mockup */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 620,
+            borderRadius: 14,
+            background: "rgba(10, 10, 14, 0.76)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            backdropFilter: "blur(28px)",
+            boxShadow:
+              "0 0 0 1px rgba(0,0,0,0.6), 0 24px 64px rgba(0,0,0,0.65), 0 0 45px rgba(255,107,74,0.08)",
+            overflow: "hidden",
+            textAlign: "left",
+          }}
+        >
+          {/* Search / input row */}
           <div
-            onClick={onLaunchSimulation}
-            className="cursor-pointer rounded-3xl bg-[#FF5533] p-6 text-black flex items-center justify-between shadow-lg hover:bg-[#ff6847] active:scale-[0.99] transition-all group"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "14px 16px",
+              borderBottom: "1px solid rgba(255,255,255,0.07)",
+            }}
           >
-            <div>
-              <span className="text-xs font-extrabold tracking-wider uppercase opacity-80">
-                Devnet Test Suite
-              </span>
-              <h4 className="text-xl font-black tracking-tight mt-0.5">
-                RUN SIMULATION LAB
-              </h4>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">
-              <ArrowUpRight className="w-5 h-5 text-white" />
-            </div>
-          </div>
-
-          {/* Bottom Card: AI-based detection with "Scam detected!" pill matching mockup */}
-          <div className="rounded-3xl bg-[#111317] p-6 text-white border border-white/[0.08] flex-1 flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <span className="px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-[#EF4444] text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <AlertTriangle className="w-3 h-3 text-[#EF4444]" />
-                Threat Intercepted
-              </span>
-              <Cpu className="w-4 h-4 text-neutral-400" />
-            </div>
-
-            {/* Illustrated threat alert badge matching mockup */}
-            <div className="my-auto py-4 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border border-red-500/40 text-red-400 font-bold text-xs shadow-[0_0_16px_rgba(239,68,68,0.25)] mb-3">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                <span>Scam / Drain detected!</span>
-              </div>
-              <p className="font-mono text-[11px] text-neutral-400">
-                Prompt injection attempt: 40,000 USDC drain thwarted
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-base font-bold text-white tracking-tight mb-1">
-                AI-based detection
-              </h3>
-              <p className="text-neutral-400 text-xs leading-relaxed">
-                Sentinel combines deterministic spending caps with contextual risk scoring to flag prompt injections and anomalous recipient addresses.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Card: Automatic Triage & Consensus Hook */}
-        <div className="rounded-3xl bg-[#E6ECEF] p-6 text-black flex flex-col justify-between shadow-lg min-h-[360px] border border-white/20">
-          <div className="flex items-center justify-between mb-4">
-            <span className="px-3 py-1 rounded-full bg-black/10 text-xs font-semibold uppercase tracking-wider">
-              Token-2022 Consensus
+            <span style={{ color: "#9c9c9d", flexShrink: 0 }}>
+              <SearchGlyph />
             </span>
-            <Lock className="w-5 h-5 text-black" />
+            <span style={{ flex: 1, fontSize: 13, color: "#ffffff", fontWeight: 400 }}>
+              evaluate_intent: agent-alpha transfer 450 USDC
+              <span
+                className="caret-blink"
+                style={{
+                  display: "inline-block",
+                  width: 2,
+                  height: 15,
+                  background: "#ff6b4a",
+                  marginLeft: 3,
+                  verticalAlign: "middle",
+                  borderRadius: 1,
+                }}
+              />
+            </span>
+            {/* Command mode pill */}
+            <span
+              style={{
+                padding: "3px 10px",
+                borderRadius: 999,
+                background: "rgba(255,107,74,0.14)",
+                border: "1px solid rgba(255,107,74,0.3)",
+                color: "#ff6b4a",
+                fontSize: 11,
+                fontFamily: "var(--font-geist-mono), monospace",
+                fontWeight: 500,
+                flexShrink: 0,
+              }}
+            >
+              Transfer Hook
+            </span>
           </div>
 
-          {/* On-Chain Hook Stamp Graphic matching mockup */}
-          <div className="my-auto py-4 flex flex-col items-center justify-center">
-            <div className="relative w-24 h-24 rounded-full border-2 border-dashed border-black/30 flex items-center justify-center p-2 text-center animate-spin-slow">
-              <span className="text-[8px] font-mono font-black uppercase tracking-widest text-black/70">
-                Transfer Hook • On-Chain •
+          {/* Result rows */}
+          {[
+            {
+              icon: <ShieldIcon />,
+              label: "Verify Policy Bound",
+              arg: "max: 500 USDC / 24h",
+              shortcut: "PASS",
+              active: true,
+            },
+            {
+              icon: <DeployIcon />,
+              label: "Evaluate Recipient Nonce",
+              arg: "allowlist: verified",
+              shortcut: "0ms",
+              active: false,
+            },
+            {
+              icon: <KeyIcon />,
+              label: "Sign Ed25519 Permit",
+              arg: "valid: 60s ttl",
+              shortcut: "ED25519",
+              active: false,
+            },
+            {
+              icon: <OpenIcon />,
+              label: "Execute On-Chain Settlement",
+              arg: "solana::token_2022",
+              shortcut: "COMMITTED",
+              active: false,
+            },
+          ].map((row, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 16px",
+                background: row.active
+                  ? "linear-gradient(90deg, rgba(255,107,74,0.15) 0%, rgba(255,47,58,0.08) 100%)"
+                  : "transparent",
+                borderLeft: row.active
+                  ? "2px solid rgba(255,107,74,0.85)"
+                  : "2px solid transparent",
+              }}
+            >
+              <span
+                style={{
+                  color: row.active ? "#ff6b4a" : "#9c9c9d",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {row.icon}
+              </span>
+              <span
+                style={{
+                  flex: 1,
+                  fontSize: 13,
+                  color: row.active ? "#ffffff" : "rgba(255,255,255,0.7)",
+                  fontWeight: row.active ? 500 : 400,
+                }}
+              >
+                {row.label}{" "}
+                <span
+                  style={{
+                    fontFamily: "var(--font-geist-mono), monospace",
+                    fontSize: 12,
+                    color: row.active ? "rgba(255,179,71,0.95)" : "#9c9c9d",
+                    fontWeight: 400,
+                  }}
+                >
+                  {row.arg}
+                </span>
+              </span>
+              {/* Status indicator chip */}
+              <span
+                style={{
+                  fontFamily: "var(--font-geist-mono), monospace",
+                  fontSize: 11,
+                  color: row.active ? "#ffb347" : "#9c9c9d",
+                  padding: "2px 7px",
+                  borderRadius: 5,
+                  background: row.active
+                    ? "rgba(255,107,74,0.16)"
+                    : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${row.active ? "rgba(255,107,74,0.35)" : "rgba(255,255,255,0.08)"}`,
+                  flexShrink: 0,
+                }}
+              >
+                {row.shortcut}
               </span>
             </div>
-            <div className="mt-3 px-3 py-1 rounded-full bg-black text-[#14F195] text-[10px] font-mono font-bold flex items-center gap-1.5 shadow-sm">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#14F195]" />
-              Consensus Guard Active
-            </div>
-          </div>
+          ))}
 
-          <div>
-            <h3 className="text-lg font-bold text-black tracking-tight mb-1">
-              Automatic triage
-            </h3>
-            <p className="text-neutral-600 text-xs leading-relaxed">
-              If a transaction lacks a verified Ed25519 Sentinel permit, the Solana Token-2022 Transfer Hook rolls back the transfer at the validator level.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 02: Ecosystem & Partner Logos Bar matching mockup */}
-      <div className="max-w-5xl mx-auto pt-8 border-t border-white/[0.08]">
-        <div className="flex items-center justify-between mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#16181F] border border-white/[0.08] text-xs">
-            <span className="text-[#FF5533] font-mono font-bold">02</span>
-            <span className="text-neutral-400">|</span>
-            <span className="text-neutral-300 font-medium">Secured Architecture & Toolchain</span>
-          </div>
-          <span className="text-xs text-neutral-500 font-mono hidden sm:inline">
-            Devnet Proof of Concept
-          </span>
-        </div>
-
-        {/* Logos Ribbon */}
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-          <div className="px-5 py-2.5 rounded-full bg-[#111317] border border-white/[0.08] text-xs font-mono font-semibold text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#14F195]"></span>
-            Solana Token-2022
-          </div>
-          <div className="px-5 py-2.5 rounded-full bg-[#111317] border border-white/[0.08] text-xs font-mono font-semibold text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#06B6D4]"></span>
-            Anchor Framework
-          </div>
-          <div className="px-5 py-2.5 rounded-full bg-[#FF5533] text-black text-xs font-mono font-extrabold flex items-center gap-2 shadow-[0_0_14px_rgba(255,85,51,0.25)]">
-            * LILIA SENTINEL
-          </div>
-          <div className="px-5 py-2.5 rounded-full bg-[#111317] border border-white/[0.08] text-xs font-mono font-semibold text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-            Model Context Protocol (MCP)
-          </div>
-          <div className="px-5 py-2.5 rounded-full bg-[#111317] border border-white/[0.08] text-xs font-mono font-semibold text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-            Helius RPC Engine
-          </div>
-          <div className="px-5 py-2.5 rounded-full bg-[#111317] border border-white/[0.08] text-xs font-mono font-semibold text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            Fastify + Bun Runtime
+          {/* Footer strip */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "9px 16px",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(0,0,0,0.35)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-geist-mono), monospace",
+                fontSize: 11,
+                color: "#9c9c9d",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Consensus guard active · Ed25519 verified
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-geist-mono), monospace",
+                fontSize: 11,
+                color: "rgba(255,107,74,0.8)",
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+              }}
+            >
+              LILIA PROTOCOL
+            </span>
           </div>
         </div>
       </div>

@@ -1,7 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import { Wallet, ArrowRight, ShieldCheck, Menu, X, LayoutDashboard, Globe } from "lucide-react";
+import React from "react";
+import { TubelightNavBar, NavItem } from "./ui/tubelight-navbar";
+import {
+  Shield,
+  Layers,
+  Terminal,
+  Code2,
+  LayoutDashboard,
+  Users,
+  Lock,
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  Globe,
+} from "lucide-react";
 
 interface NavbarProps {
   currentView: "landing" | "app";
@@ -12,6 +25,36 @@ interface NavbarProps {
   setWalletConnected: (c: boolean) => void;
 }
 
+function DiamondGlyph() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 2L4 9l8 13 8-13L12 2z"
+        fill="url(#diamond-nav-grad)"
+        stroke="url(#diamond-nav-stroke)"
+        strokeWidth="0.5"
+      />
+      <defs>
+        <linearGradient id="diamond-nav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffb347" />
+          <stop offset="50%" stopColor="#ff6b4a" />
+          <stop offset="100%" stopColor="#ff2f3a" />
+        </linearGradient>
+        <linearGradient id="diamond-nav-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffb347" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#ff2f3a" stopOpacity="0.4" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
@@ -20,147 +63,90 @@ export const Navbar: React.FC<NavbarProps> = ({
   walletConnected,
   setWalletConnected,
 }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const landingNav = [
-    { label: "The Problem", href: "#problem" },
-    { label: "Consensus Firewall", href: "#firewall" },
-    { label: "Simulation Lab", href: "#simulation" },
-    { label: "Architecture", href: "#architecture" },
-    { label: "MCP Protocol", href: "#mcp" },
+  const landingNav: NavItem[] = [
+    { name: "Thesis", url: "#problem", icon: Shield },
+    { name: "Architecture", url: "#firewall", icon: Layers },
+    { name: "Simulation", url: "#simulation", icon: Terminal },
+    { name: "MCP Protocol", url: "#mcp", icon: Code2 },
   ];
 
-  const appNav = [
-    { id: "overview", label: "Overview" },
-    { id: "agents", label: "Agent Registry" },
-    { id: "policies", label: "Security Policies" },
-    { id: "transactions", label: "Transaction Feed" },
-    { id: "threats", label: "Threat Intel" },
-    { id: "simulation", label: "Simulation Suite" },
-    { id: "integrations", label: "MCP & API" },
+  const appNav: NavItem[] = [
+    { id: "overview", name: "Overview", url: "#", icon: LayoutDashboard },
+    { id: "agents", name: "Agents", url: "#", icon: Users },
+    { id: "policies", name: "Policies", url: "#", icon: Lock },
+    { id: "transactions", name: "Feed", url: "#", icon: Activity },
+    { id: "threats", name: "Threats", url: "#", icon: AlertTriangle },
+    { id: "simulation", name: "Simulate", url: "#", icon: Terminal },
   ];
+
+  const brandSlot = (
+    <button
+      type="button"
+      onClick={() => setCurrentView("landing")}
+      className="flex items-center gap-2 group cursor-pointer focus:outline-none"
+    >
+      <DiamondGlyph />
+      <span className="font-bold tracking-wider text-sm text-white group-hover:text-[#ffb347] transition-colors">
+        LILIA
+      </span>
+      <span className="hidden xl:inline-block px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[9px] font-mono text-neutral-400 border border-white/[0.08]">
+        Hook
+      </span>
+    </button>
+  );
+
+  const actionSlot = (
+    <div className="flex items-center gap-1.5">
+      {/* Wallet Pill */}
+      <button
+        type="button"
+        onClick={() => setWalletConnected(!walletConnected)}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-mono text-neutral-300 hover:border-white/[0.2] transition-all cursor-pointer"
+        title="Toggle Devnet connection"
+      >
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            walletConnected ? "bg-[#14F195]" : "bg-neutral-500"
+          }`}
+        />
+        <span className="hidden md:inline text-[11px]">
+          {walletConnected ? "9xQ2...dev" : "Connect"}
+        </span>
+      </button>
+
+      {/* View Toggle */}
+      {currentView === "landing" ? (
+        <button
+          type="button"
+          onClick={() => setCurrentView("app")}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#e6e6e6] text-[#18181b] hover:bg-white transition-all shadow-[0_0_14px_rgba(255,255,255,0.15)] active:scale-[0.98] cursor-pointer"
+        >
+          <span className="hidden sm:inline">Launch App</span>
+          <span className="sm:hidden">App</span>
+          <ArrowRight size={12} strokeWidth={2.5} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setCurrentView("landing")}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/[0.08] text-white border border-white/[0.12] hover:bg-white/[0.15] transition-all active:scale-[0.98] cursor-pointer"
+        >
+          <Globe size={12} className="text-[#ff6b4a]" />
+          <span>Landing</span>
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <header className="sticky top-3 z-50 px-4 md:px-8 max-w-7xl mx-auto w-full">
-      <div className="flex items-center justify-between gap-3">
-        {/* Brand Logo with Tactile Coral Asterisk Glyph */}
-        <div
-          onClick={() => setCurrentView("landing")}
-          className="cursor-pointer group flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#101217]/90 border border-white/[0.09] backdrop-blur-xl hover:border-white/[0.22] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
-        >
-          <div className="w-6 h-6 rounded-full bg-[#FF532A] flex items-center justify-center text-black font-black text-sm shadow-[0_0_14px_rgba(255,83,42,0.45)] group-hover:rotate-45 transition-transform duration-300">
-            ✱
-          </div>
-          <span className="font-bold text-white tracking-tight text-sm md:text-base">
-            LILIA
-          </span>
-          <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-white/[0.06] text-[10px] font-mono text-neutral-400 border border-white/[0.05]">
-            Solana Hook
-          </span>
-        </div>
-
-        {/* Center Glassmorphic Navigation Island */}
-        <nav className="hidden lg:flex items-center gap-1 bg-[#101217]/85 border border-white/[0.09] backdrop-blur-2xl px-2.5 py-1.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
-          {currentView === "landing"
-            ? landingNav.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-medium text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-all"
-                >
-                  {item.label}
-                </a>
-              ))
-            : appNav.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveAppTab(item.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    activeAppTab === item.id
-                      ? "bg-white text-black font-semibold shadow-sm"
-                      : "text-neutral-400 hover:text-white hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-        </nav>
-
-        {/* Right Modular Controls: View Switcher + Wallet CTA */}
-        <div className="flex items-center gap-2">
-          {/* Landing <-> Control Center Toggle Button */}
-          {currentView === "landing" ? (
-            <button
-              onClick={() => setCurrentView("app")}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold tracking-tight transition-all active:scale-[0.98] bg-[#FF532A] text-black hover:bg-[#ff6844] shadow-[0_0_20px_rgba(255,83,42,0.35)]"
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span className="hidden sm:inline">Launch Control Center</span>
-              <span className="sm:hidden">App</span>
-              <ArrowRight className="w-3 h-3 stroke-[2.5]" />
-            </button>
-          ) : (
-            <button
-              onClick={() => setCurrentView("landing")}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold tracking-tight transition-all active:scale-[0.98] bg-[#161820] text-neutral-300 border border-white/[0.12] hover:border-white/[0.25] hover:text-white"
-            >
-              <Globe className="w-3.5 h-3.5 text-[#FF532A]" />
-              <span className="hidden sm:inline">Landing Page</span>
-              <span className="sm:hidden">Landing</span>
-            </button>
-          )}
-
-          {/* Wallet Button */}
-          <button
-            onClick={() => setWalletConnected(!walletConnected)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#101217]/90 border border-white/[0.1] text-xs font-mono text-neutral-300 hover:border-white/[0.2] transition-all"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#14F195]"></span>
-            <span className="hidden md:inline">{walletConnected ? "Athar...9xQ2" : "Connect"}</span>
-          </button>
-
-          {/* Mobile Menu Hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-full bg-[#101217] border border-white/[0.09] text-neutral-400 hover:text-white"
-          >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden mt-2 p-3 rounded-2xl bg-[#101217]/95 border border-white/[0.1] backdrop-blur-2xl shadow-2xl animate-fade-in flex flex-col gap-1.5">
-          {currentView === "landing"
-            ? landingNav.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2 rounded-xl text-xs font-medium text-neutral-300 hover:bg-white/[0.06] hover:text-white"
-                >
-                  {item.label}
-                </a>
-              ))
-            : appNav.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveAppTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`text-left px-3 py-2 rounded-xl text-xs font-medium ${
-                    activeAppTab === item.id
-                      ? "bg-white text-black font-bold"
-                      : "text-neutral-300 hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-        </div>
-      )}
+    <header className="relative">
+      <TubelightNavBar
+        items={currentView === "landing" ? landingNav : appNav}
+        activeId={currentView === "app" ? activeAppTab : undefined}
+        onSelect={currentView === "app" ? (id) => setActiveAppTab(id) : undefined}
+        brandSlot={brandSlot}
+        actionSlot={actionSlot}
+      />
     </header>
   );
 };
