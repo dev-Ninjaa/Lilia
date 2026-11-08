@@ -127,6 +127,17 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                   </td>
 
                   <td className="py-3 px-4 text-right">
+                    {tx.txSignature && (
+                      <a
+                        href={`https://explorer.solana.com/tx/${tx.txSignature}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mr-3 inline-flex items-center gap-1 text-xs text-[#14F195] hover:underline font-sans font-semibold"
+                      >
+                        Proof <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {

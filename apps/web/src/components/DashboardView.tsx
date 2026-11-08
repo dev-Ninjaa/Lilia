@@ -60,6 +60,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </h2>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href="https://explorer.solana.com/address/51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz?cluster=devnet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-full border border-white/[0.15] text-white font-mono text-xs hover:bg-white/[0.06]"
+          >
+            Program 51yqX5…FTbz ↗
+          </a>
           <button
             type="button"
             onClick={() => onNavigateTab("simulation")}

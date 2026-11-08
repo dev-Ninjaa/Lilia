@@ -686,7 +686,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ launchHref = "/console
               {/* Col 3: External Links */}
               <div className="lg:col-span-3 space-y-3">
                 <a
-                  href="https://explorer.solana.com/address/L1L1A11111111111111111111111111111111111111?cluster=devnet"
+                  href="https://explorer.solana.com/address/51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz?cluster=devnet"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-3.5 rounded-xl bg-[#0a0a0e]/70 border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.15] transition-all group backdrop-blur-md"
