@@ -65,7 +65,7 @@ LILIA_PERMIT_TTL_SLOTS=300
 - `LILIA_ADMIN_KEYPAIR_PATH` must be the keypair whose public key is the on-chain `upgrade_authority`.
 - Without these settings the v2 endpoints return 503 and no transaction is fabricated.
 
-The program, Permit v2 codec, and v2 API flows are implemented but **not deployed** in this phase. See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full component map.
+The program, Permit v2 codec, and v2 API flows are implemented and were exercised end-to-end on a local validator: setup, four live transfer scenarios, and an 18-check acceptance run. Devnet deployment is pending a funded keypair (the public faucets currently require GitHub auth or are closed). See [PHASE_3_ACCEPTANCE_REPORT.md](./docs/PHASE_3_ACCEPTANCE_REPORT.md) for evidence and [scripts/devnet/README.md](./scripts/devnet/README.md) for the run order.
 
 ## Useful commands
 
@@ -82,5 +82,8 @@ The program, Permit v2 codec, and v2 API flows are implemented but **not deploye
 | `anchor build` | Build the Solana program and IDL |
 | `cargo test -p lilia` | Run Rust unit tests |
 | `bun test packages/solana` | Run Solana SDK tests |
+| `bun run devnet:setup` | Provision the sentinel, mint, agent, and policy |
+| `bun run devnet:verify` | Run the 18-check acceptance suite |
+| `bun run devnet:cleanup` | Report locked rent (optional `--disable`) |
 
 `apps/web` is a separate Next.js workspace with its own dependencies and lint configuration; it is excluded from the root TypeScript and Biome checks.

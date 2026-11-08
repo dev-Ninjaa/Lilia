@@ -769,5 +769,5 @@ sequence counter inside `AgentRegistry`.
 
 **Document Version:** 2.1  
 **Last Updated:** November 8, 2026  
-**Status:** Implemented and verified locally (build + unit tests); not yet deployed  
-**Next Steps:** Deploy to Devnet and initialize the mint, extra account metas, agents, and policies
+**Status:** Implemented, deployed to a local validator, and exercised with live transfers; Devnet deployment pending funding  
+**Next Steps:** Deploy to Devnet once the upgrade-authority keypair is funded, then initialize the mint, extra account metas, agents, and policies

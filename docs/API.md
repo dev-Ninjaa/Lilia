@@ -408,11 +408,11 @@ The backend signs a compact UTF-8 JSON string using Ed25519. The exact canonical
 
 Serialization is `JSON.stringify` over an object inserted in precisely the order shown; there is no whitespace, Unicode normalization, or key sorting. Amount is the original validated decimal string. `expiresAt` is UTC ISO-8601. `nonce` is a UUID. The `signature` is base64url-encoded Ed25519 over the UTF-8 bytes; `permitHash` is lowercase hex SHA-256 of those same bytes. This server issues backend authorization only; an Anchor program must independently implement and verify this exact message before any on-chain enforcement is claimed.
 
-Database lifecycle: evaluation creates an assessment; authorization creates an `issued` permit and `authorized` transaction intent atomically; successful local preparation changes that same intent to `prepared` and consumes the permit. Disabling an agent or updating/deactivating its policy revokes issued permits and rejects unprepared authorized intents. No current path moves a row to submitted or confirmed because real Solana submission/confirmation is not implemented.
+Database lifecycle (v1 flow): evaluation creates an assessment; authorization creates an `issued` permit and `authorized` transaction intent atomically; successful local preparation changes that same intent to `prepared` and consumes the permit. Disabling an agent or updating/deactivating its policy revokes issued permits and rejects unprepared authorized intents. The v1 path never contacts a cluster; the v2 path is described above and does submit, confirm, and record real signatures.
 
 ## Honest integration limits
 
-- **Solana:** the program, Permit v2 codec, and v2 API flows are implemented. They remain **inactive until `SOLANA_RPC_URL` and the key configuration are set**, and they have not been deployed or exercised against a live cluster in this phase. Without configuration the endpoints return 503 `SOLANA_NOT_CONFIGURED`; no transfer is ever simulated or marked confirmed.
+- **Solana:** the program, Permit v2 codec, and v2 API flows are implemented. They remain **inactive until `SOLANA_RPC_URL` and the key configuration are set**; without configuration the endpoints return 503 `SOLANA_NOT_CONFIGURED`. They have been exercised end-to-end on a local validator (deployment, mint, four live transfer scenarios, 18/18 acceptance checks). Devnet deployment is pending a funded keypair because the public faucets are closed or require GitHub authentication. See `docs/PHASE_3_ACCEPTANCE_REPORT.md`.
 - **Gemini:** optional key is read only for truthful integration reporting; deterministic rules are the only evaluator and cannot be overridden.
 - **MCP:** not implemented. Shared core services are the intended future integration interface.
 

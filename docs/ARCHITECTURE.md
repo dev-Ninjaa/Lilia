@@ -978,14 +978,15 @@ Migration `0002_solana_v2.sql` adds nullable/defaulted v2 columns to agents, pol
 ### Verification performed
 
 - `anchor build`: success (`.so` + IDL).
-- `cargo test -p lilia`: 12 passed, including a byte-identical TypeScript→Rust canonical permit vector.
+- `cargo test -p lilia`: 13 passed, including byte-identical TypeScript→Rust canonical permit and web3.js Ed25519 instruction vectors.
 - `bun test packages/solana`: 20 passed.
 - `bun run typecheck`, `bun run lint`: clean.
-- Migration applied on a fresh SQLite database and re-run idempotently.
+- Migrations applied on a fresh SQLite database and re-run idempotently.
+- Deployed to a local validator and exercised end-to-end with `scripts/devnet`: sentinel, Token-2022 mint with the hook, extra metas, agent, policy, a confirmed transfer, and the replay/amount/expiry rejections. `bun run devnet:verify` reports 18/18.
+- `docs/PHASE_3_ACCEPTANCE_REPORT.md` records the accounts, signatures, and results.
 
 ### Not done
 
-- No program deployment, mint creation, or live transfer (deliberate scope).
-- No Devnet execution scripts or acceptance-criteria run.
+- No Devnet deployment: the RPC faucet is closed and the web faucet requires GitHub authentication, so no keypair could be funded. The scripts are cluster-agnostic and ready once funding exists.
 - `apps/web` is a separate Next.js workspace and is excluded from the root Biome/TS checks.
 
