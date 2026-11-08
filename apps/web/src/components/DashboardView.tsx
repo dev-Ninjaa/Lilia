@@ -142,9 +142,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Middle Section: Active Agents Overview + Real-time Security Event Log */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Left Column (2/3): Active Agents Summary */}
-        <div className="lg:col-span-2 rounded-2xl bg-[#111317] border border-white/[0.08] p-6 flex flex-col justify-between">
+        <div className="rounded-2xl bg-[#111317] border border-white/[0.08] p-6 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-white tracking-tight">
@@ -234,7 +234,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
           </div>
 
-          <div className="space-y-2.5 overflow-y-auto max-h-[260px] pr-1">
+          <div className="space-y-2.5 overflow-y-auto max-h-[420px] pr-1">
             {events.map((evt) => (
               <div
                 key={evt.id}
