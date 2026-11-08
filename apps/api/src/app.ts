@@ -12,6 +12,7 @@ import policiesRoutes from "./routes/policies.ts";
 import securityRoutes from "./routes/security.ts";
 import sentinelRoutes from "./routes/sentinel.ts";
 import simulationRoutes from "./routes/simulation.ts";
+import solanaRoutes from "./routes/solana.ts";
 import transactionsRoutes from "./routes/transactions.ts";
 
 export async function buildApp() {
@@ -43,5 +44,6 @@ export async function buildApp() {
   await app.register(simulationRoutes);
   await app.register(securityRoutes);
   await app.register(integrationsRoutes);
+  await app.register(solanaRoutes);
   return app;
 }

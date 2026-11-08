@@ -7,9 +7,9 @@ const routes: FastifyPluginAsync = async (app) => {
   app.get("/api/integrations", async (request, reply) =>
     sendSuccess(reply, request, {
       solanaRpc: {
-        status: "not_configured",
+        status: env.SOLANA_RPC_URL ? "configured" : "not_configured",
         endpointConfigured: Boolean(env.SOLANA_RPC_URL),
-        note: "No RPC adapter or transaction submission is implemented.",
+        note: "Permit v2 and transfer submission are available when configured.",
       },
       gemini: { status: env.GEMINI_API_KEY ? "configured_but_unused" : "not_configured" },
       mcp: { status: "not_implemented" },
@@ -18,8 +18,10 @@ const routes: FastifyPluginAsync = async (app) => {
   );
   app.get("/api/integrations/solana/status", async (request, reply) =>
     sendSuccess(reply, request, {
-      status: "not_configured",
+      status: env.SOLANA_RPC_URL ? "configured" : "not_configured",
       endpointConfigured: Boolean(env.SOLANA_RPC_URL),
+      programId: env.LILIA_PROGRAM_ID,
+      commitment: env.SOLANA_RPC_COMMITMENT,
       rpcHealthChecked: false,
     }),
   );

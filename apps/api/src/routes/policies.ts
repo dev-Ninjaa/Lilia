@@ -1,20 +1,32 @@
 import type { FastifyPluginAsync } from "fastify";
 import { PolicyService } from "../../../../packages/core/src/policy/policy.service.ts";
+import { SolanaAdminService } from "../../../../packages/core/src/solana/admin.service.ts";
 import {
   createPolicySchema,
   policyIdParams,
   policyListQuery,
+  publishPolicyOnChainSchema,
   updatePolicySchema,
 } from "../../../../packages/schemas/src/index.ts";
 import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new PolicyService(app.db);
+  const solana = new SolanaAdminService(app.db);
 
   app.post("/api/policies", async (request, reply) => {
     const body = parseInput(createPolicySchema, request.body);
     const policy = await service.create(request.ownerId, body);
     return sendSuccess(reply, request, policy, 201);
+  });
+  app.post("/api/policies/:policyId/publish-on-chain", async (request, reply) => {
+    const { policyId } = parseInput(policyIdParams, request.params);
+    const { mintDecimals } = parseInput(publishPolicyOnChainSchema, request.body);
+    return sendSuccess(
+      reply,
+      request,
+      await solana.publishPolicy(request.ownerId, policyId, mintDecimals),
+    );
   });
   app.get("/api/policies/:policyId", async (request, reply) => {
     const { policyId } = parseInput(policyIdParams, request.params);

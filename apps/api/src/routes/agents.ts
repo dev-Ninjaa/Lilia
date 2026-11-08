@@ -1,20 +1,45 @@
 import type { FastifyPluginAsync } from "fastify";
 import { AgentService } from "../../../../packages/core/src/agent/agent.service.ts";
+import { SolanaAdminService } from "../../../../packages/core/src/solana/admin.service.ts";
 import {
   agentIdParams,
   agentListQuery,
+  agentStatusOnChainSchema,
   createAgentSchema,
+  registerAgentOnChainSchema,
   updateAgentSchema,
 } from "../../../../packages/schemas/src/index.ts";
 import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new AgentService(app.db);
+  const solana = new SolanaAdminService(app.db);
 
   app.post("/api/agents/register", async (request, reply) => {
     const body = parseInput(createAgentSchema, request.body);
     const agent = await service.create(request.ownerId, body);
     return sendSuccess(reply, request, agent, 201);
+  });
+
+  app.post("/api/agents/:agentId/register-on-chain", async (request, reply) => {
+    const { agentId } = parseInput(agentIdParams, request.params);
+    const body = parseInput(registerAgentOnChainSchema, request.body);
+    return sendSuccess(
+      reply,
+      request,
+      await solana.registerAgent(request.ownerId, agentId, body),
+      201,
+    );
+  });
+
+  app.post("/api/agents/:agentId/status-on-chain", async (request, reply) => {
+    const { agentId } = parseInput(agentIdParams, request.params);
+    const { isActive } = parseInput(agentStatusOnChainSchema, request.body);
+    return sendSuccess(
+      reply,
+      request,
+      await solana.setAgentStatus(request.ownerId, agentId, isActive),
+    );
   });
 
   app.get("/api/agents", async (request, reply) => {
