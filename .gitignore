@@ -14,3 +14,4 @@ turbo
 .turbo/**
 apps/*/bun.lock
 packages/*/bun.lock
+.vercel
