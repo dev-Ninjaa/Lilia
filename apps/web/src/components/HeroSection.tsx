@@ -22,19 +22,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ launchHref = "/console
 
         {/* Hero Title with Warm Gradient Accent Word */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.08]">
-          Give your AI agent a wallet.
+          Let your AI agent spend.
           <br />
-          Not a{" "}
+          Only what you{" "}
           <span className="bg-gradient-to-r from-[#ffb347] via-[#ff6b4a] to-[#ff2f3a] bg-clip-text text-transparent">
-            blank check.
+            allow.
           </span>
         </h1>
 
         {/* Hero Subtitle */}
         <p className="mt-6 text-sm sm:text-base text-neutral-400 max-w-2xl mx-auto leading-relaxed font-normal">
-          Lilia lets you control how much your AI agents can spend and who they can pay. Those
-          limits are enforced on Solana, so protected transfers that break your rules don't go
-          through.
+          Your agent keeps its own wallet. Lilia sets the rules: how much it can send, and who it
+          can pay. Every transfer needs a permit Lilia signs, and Solana rejects any protected
+          transfer without one.
         </p>
 
         {/* CTAs */}
