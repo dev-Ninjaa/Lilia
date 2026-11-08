@@ -1,13 +1,13 @@
 "use client";
 
 import { type AppTabId, Sidebar } from "@/components/Sidebar";
+import { solanaStatus } from "@/lib/api";
 import { Menu } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type ConsoleShellProps = {
   children: React.ReactNode;
-  apiConnected: boolean;
 };
 
 const TAB_BY_PATH: Record<string, AppTabId> = {
@@ -25,10 +25,23 @@ const TAB_BY_PATH: Record<string, AppTabId> = {
  * Client shell for the console routes: sidebar + mobile header around the
  * matched Server Component page.
  */
-export const ConsoleShell: React.FC<ConsoleShellProps> = ({ children, apiConnected }) => {
+export const ConsoleShell: React.FC<ConsoleShellProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [apiConnected, setApiConnected] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    solanaStatus()
+      .then((status) => {
+        if (!cancelled) setApiConnected(status.configured);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const segment = pathname.replace("/console", "").replace("/", "");
   const activeTab = TAB_BY_PATH[segment] ?? "overview";

@@ -1,10 +1,20 @@
 import { TransfersTab } from "@/app/console/tabs";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { fetchAgents, fetchPolicies } from "@/lib/api/server.api";
 import { mapAgent, mapPolicy } from "@/lib/mappers";
+import { Suspense } from "react";
 
-export default async function TransfersPage() {
+async function TransfersData() {
   const [agentRows, policyRows] = await Promise.all([fetchAgents(), fetchPolicies()]);
   const policies = policyRows.map(mapPolicy);
   const agents = agentRows.map((row) => mapAgent(row, "", 1000));
   return <TransfersTab agents={agents} policies={policies} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <TransfersData />
+    </Suspense>
+  );
 }

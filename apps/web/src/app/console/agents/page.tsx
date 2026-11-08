@@ -1,8 +1,10 @@
 import { AgentsTab } from "@/app/console/tabs";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { fetchAgents, fetchPolicies } from "@/lib/api/server.api";
 import { mapAgent, mapPolicy } from "@/lib/mappers";
+import { Suspense } from "react";
 
-export default async function AgentsPage() {
+async function AgentsData() {
   const [agentRows, policyRows] = await Promise.all([fetchAgents(), fetchPolicies()]);
   const policies = policyRows.map(mapPolicy);
   const policyByAgent = new Map<string, string>();
@@ -17,4 +19,12 @@ export default async function AgentsPage() {
     ),
   );
   return <AgentsTab agents={agents} policies={policies} />;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <AgentsData />
+    </Suspense>
+  );
 }
