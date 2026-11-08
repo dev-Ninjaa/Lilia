@@ -4,3 +4,7 @@ database/*.db
 database/*.db-shm
 database/*.db-wal
 dist/
+target/
+.anchor/
+test-ledger/
+

@@ -14,5 +14,19 @@
       "suspicious": { "noExplicitAny": "error" }
     }
   },
-  "files": { "ignore": ["bun.lock", "database/lilia.db"] }
+  "files": {
+    "ignore": [
+      "bun.lock",
+      "database/lilia.db",
+      "apps/web",
+      "apps/web/**",
+      "target",
+      "target/**",
+      ".anchor",
+      ".anchor/**",
+      "test-ledger",
+      "test-ledger/**",
+      "packages/solana/src/idl"
+    ]
+  }
 }

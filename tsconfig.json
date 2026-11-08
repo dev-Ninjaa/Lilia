@@ -11,5 +11,6 @@
     "skipLibCheck": true,
     "types": ["bun", "node"]
   },
-  "include": ["apps/**/*.ts", "packages/**/*.ts", "database/**/*.ts", "scripts/**/*.ts"]
+  "include": ["apps/**/*.ts", "packages/**/*.ts", "database/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["apps/web", "node_modules", "dist"]
 }
