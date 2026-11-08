@@ -20,7 +20,7 @@ import {
 import type React from "react";
 
 interface LandingPageProps {
-  onLaunchApp: () => void;
+  launchHref?: string;
 }
 
 const DEFENSE_LAYERS = [
@@ -126,14 +126,14 @@ pub fn process_transfer_hook(ctx: Context<TransferHook>) -> Result<()> {
   },
 ];
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ launchHref = "/console/overview" }) => {
   return (
     <div
       style={{ background: "#07080a", color: "#ffffff" }}
       className="selection:bg-[#ff6b4a] selection:text-black overflow-hidden"
     >
       {/* ── HERO SECTION ────────────────────────────────────────── */}
-      <HeroSection onLaunchApp={onLaunchApp} />
+      <HeroSection launchHref={launchHref} />
 
       {/* ── SECTIONS with Subtle Varied Aurora Backdrops ─────────── */}
       <div className="relative w-full">
@@ -398,9 +398,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               unconstrained private key.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={onLaunchApp}
+              <a
+                href={launchHref}
                 className="group flex items-center gap-2.5 px-8 py-3.5 rounded-full text-sm font-semibold transition-all active:scale-[0.98] cursor-pointer"
                 style={{
                   background: "linear-gradient(135deg, #ff6b4a, #ff2f3a)",
@@ -410,7 +409,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               >
                 <span>Launch Lilia Control Center</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </a>
               <a
                 href="#problem"
                 className="px-6 py-3.5 rounded-full text-sm font-medium text-neutral-300 border border-white/[0.12] hover:text-white hover:border-white/[0.25] transition-all"

@@ -47,6 +47,13 @@ export type DashboardData = {
   apiConnected: boolean;
 };
 
+export const fetchAgents = () => serverRequest<BackendAgent[]>("/agents");
+export const fetchPolicies = () => serverRequest<BackendPolicy[]>("/policies");
+export const fetchTransactions = () =>
+  serverRequest<BackendTransaction[]>("/transactions?limit=100");
+export const fetchEvents = () => serverRequest<BackendEvent[]>("/security/events?limit=100");
+export const fetchSolanaStatus = () => serverRequest<SolanaStatus>("/solana/status");
+
 export async function fetchDashboardData(): Promise<DashboardData> {
   const [agentRows, policyRows, txRows, eventRows, status] = await Promise.all([
     serverRequest<BackendAgent[]>("/agents"),

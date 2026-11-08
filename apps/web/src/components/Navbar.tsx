@@ -2,9 +2,10 @@
 
 import { type NavItem, TubelightNavBar } from "@/components/ui/tubelight-navbar";
 import { ArrowRight, Code2, Layers, Shield, Terminal } from "lucide-react";
+import Link from "next/link";
 
 type NavbarProps = {
-  onLaunchApp: () => void;
+  launchHref?: string;
 };
 
 function DiamondGlyph() {
@@ -31,7 +32,7 @@ function DiamondGlyph() {
   );
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onLaunchApp }) => {
+export const Navbar: React.FC<NavbarProps> = ({ launchHref = "/console/overview" }) => {
   const landingNav: NavItem[] = [
     { name: "Thesis", url: "#problem", icon: Shield },
     { name: "Architecture", url: "#firewall", icon: Layers },
@@ -50,15 +51,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onLaunchApp }) => {
   );
 
   const actionSlot = (
-    <button
-      type="button"
-      onClick={onLaunchApp}
+    <Link
+      href={launchHref}
       className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#e6e6e6] text-[#18181b] hover:bg-white transition-all shadow-[0_0_14px_rgba(255,255,255,0.15)] active:scale-[0.98] cursor-pointer"
     >
       <span className="hidden sm:inline">Launch App</span>
       <span className="sm:hidden">App</span>
       <ArrowRight size={12} strokeWidth={2.5} />
-    </button>
+    </Link>
   );
 
   return (

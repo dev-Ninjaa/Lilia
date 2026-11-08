@@ -122,10 +122,10 @@ function FilmGrain() {
 
 /* ─── Component ─────────────────────────────────────────────── */
 interface HeroSectionProps {
-  onLaunchApp: () => void;
+  launchHref?: string;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ launchHref = "/console/overview" }) => {
   return (
     <section
       className="relative flex flex-col items-center justify-start overflow-hidden pt-28 pb-20 px-4 md:px-8"
@@ -269,9 +269,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
             <span>Run Simulation Lab</span>
           </a>
 
-          <button
-            type="button"
-            onClick={onLaunchApp}
+          <a
+            href={launchHref}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-all active:scale-[0.98]"
             style={{
               background: "linear-gradient(135deg, rgba(255,107,74,0.18), rgba(255,47,58,0.1))",
@@ -282,7 +281,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
           >
             <Sparkles className="w-4 h-4 text-[#ff6b4a]" />
             <span>Open Sentinel App</span>
-          </button>
+          </a>
         </div>
 
         {/* GeistMono install/spec caption */}
