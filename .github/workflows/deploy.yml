@@ -17,31 +17,39 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: devnet
+    env:
+      SOLANA_RPC_URL: https://api.devnet.solana.com
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install Solana CLI
+      - name: Install Solana CLI (prebuilt)
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
-      - name: Install Anchor CLI
+      - name: Install Anchor CLI (prebuilt binary, no cargo build)
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor --tag v1.2.2 anchor-cli --locked
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          curl -fsSL -o anchor.tar.gz https://github.com/coral-xyz/anchor/releases/download/v1.2.2/anchor-cli-v1.2.2-x86_64-unknown-linux-gnu.tar.gz
+          tar -xzf anchor.tar.gz
+          sudo install -m 0755 anchor /usr/local/bin/anchor
+          anchor --version
 
       - name: Restore admin keypair
-        run: |
-          mkdir -p "$HOME/.config/solana"
-          echo "$ADMIN_KEYPAIR_JSON" > "$HOME/.config/solana/id.json"
-          chmod 600 "$HOME/.config/solana/id.json"
-          solana config set --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json"
         env:
           ADMIN_KEYPAIR_JSON: ${{ secrets.ADMIN_KEYPAIR_JSON }}
+        run: |
+          mkdir -p "$HOME/.config/solana"
+          printf '%s' "$ADMIN_KEYPAIR_JSON" > "$HOME/.config/solana/id.json"
+          chmod 600 "$HOME/.config/solana/id.json"
+          solana config set --url "$SOLANA_RPC_URL" --keypair "$HOME/.config/solana/id.json"
+          solana address
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -51,21 +59,25 @@ jobs:
         env:
           CARGO_BUILD_JOBS: "1"
 
-      - name: Deploy the program
+      - name: Deploy the program to Devnet
         run: anchor deploy --provider.cluster devnet
 
       - name: Write environment
+        env:
+          LILIA_API_KEY: ${{ secrets.LILIA_API_KEY }}
+          LILIA_SIGNING_PRIVATE_KEY: ${{ secrets.LILIA_SIGNING_PRIVATE_KEY }}
+          LILIA_SIGNING_PUBLIC_KEY: ${{ secrets.LILIA_SIGNING_PUBLIC_KEY }}
         run: |
           cat > .env <<EOF
           PORT=4000
           HOST=0.0.0.0
           NODE_ENV=production
           DATABASE_URL=./database/lilia.db
-          LILIA_API_KEY=${{ secrets.LILIA_API_KEY }}
-          LILIA_SIGNING_PRIVATE_KEY=${{ secrets.LILIA_SIGNING_PRIVATE_KEY }}
-          LILIA_SIGNING_PUBLIC_KEY=${{ secrets.LILIA_SIGNING_PUBLIC_KEY }}
+          LILIA_API_KEY=${LILIA_API_KEY}
+          LILIA_SIGNING_PRIVATE_KEY=${LILIA_SIGNING_PRIVATE_KEY}
+          LILIA_SIGNING_PUBLIC_KEY=${LILIA_SIGNING_PUBLIC_KEY}
           GEMINI_API_KEY=
-          SOLANA_RPC_URL=https://api.devnet.solana.com
+          SOLANA_RPC_URL=${SOLANA_RPC_URL}
           SOLANA_RPC_COMMITMENT=confirmed
           LILIA_PROGRAM_ID=51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz
           LILIA_SENTINEL_PUBLIC_KEY=
@@ -75,7 +87,7 @@ jobs:
           EOF
           chmod 600 .env
 
-      - name: Migrate and start the API
+      - name: Migrate database and start the API
         run: |
           bun run db:migrate
           bun run start > api.log 2>&1 &
@@ -84,8 +96,9 @@ jobs:
             curl -sf http://127.0.0.1:4000/api/health && break
             sleep 2
           done
+          curl -sf http://127.0.0.1:4000/api/health
 
-      - name: Run acceptance setup and verification
+      - name: Acceptance setup + verification
         run: |
           bun run devnet:setup
           bun run devnet:verify

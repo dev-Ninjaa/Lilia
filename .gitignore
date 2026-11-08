@@ -12,3 +12,5 @@ test-ledger/
 turbo
 .turbo
 .turbo/**
+apps/*/bun.lock
+packages/*/bun.lock
