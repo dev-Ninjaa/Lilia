@@ -412,7 +412,7 @@ Database lifecycle (v1 flow): evaluation creates an assessment; authorization cr
 
 ## Honest integration limits
 
-- **Solana:** the program, Permit v2 codec, and v2 API flows are implemented. They remain **inactive until `SOLANA_RPC_URL` and the key configuration are set**; without configuration the endpoints return 503 `SOLANA_NOT_CONFIGURED`. They have been exercised end-to-end on a local validator (deployment, mint, four live transfer scenarios, 18/18 acceptance checks). Devnet deployment is pending a funded keypair because the public faucets are closed or require GitHub authentication. See `docs/PHASE_3_ACCEPTANCE_REPORT.md`.
+- **Solana:** the program, Permit v2 codec, and v2 API flows are implemented. They remain **inactive until `SOLANA_RPC_URL` and the key configuration are set**; without configuration the endpoints return 503 `SOLANA_NOT_CONFIGURED`. They have been exercised end-to-end on a local validator (deployment, mint, four live transfer scenarios, 18/18 acceptance checks). The program is deployed and verified on Devnet (18/18); see `docs/DEVNET_DEPLOYMENT.md`. See `docs/PHASE_3_ACCEPTANCE_REPORT.md`.
 - **Gemini:** optional key is read only for truthful integration reporting; deterministic rules are the only evaluator and cannot be overridden.
 - **MCP:** implemented as `apps/mcp` (`@lilia/mcp`, stdio transport, 7 tools over the REST API).
 
