@@ -5,12 +5,17 @@ use crate::errors::LiliaError;
 use crate::utils::permit::PERMIT_LEN;
 
 /// Canonical inline layout produced by `Ed25519Program.createInstructionWithPublicKey`:
-/// 16-byte header, 32-byte public key, message, 64-byte signature.
+/// 16-byte header, 32-byte public key, 64-byte signature, then the message.
+///
+/// Header fields (little-endian): u8 num_signatures, u8 padding,
+/// u16 signature_offset, u16 signature_instruction_index,
+/// u16 public_key_offset, u16 public_key_instruction_index,
+/// u16 message_offset, u16 message_size, u16 message_instruction_index.
 const HEADER_LEN: usize = 16;
 const PUBLIC_KEY_OFFSET: usize = HEADER_LEN;
-const MESSAGE_OFFSET: usize = PUBLIC_KEY_OFFSET + 32;
-const SIGNATURE_OFFSET: usize = MESSAGE_OFFSET + PERMIT_LEN;
-const TOTAL_LEN: usize = SIGNATURE_OFFSET + 64;
+const SIGNATURE_OFFSET: usize = PUBLIC_KEY_OFFSET + 32;
+const MESSAGE_OFFSET: usize = SIGNATURE_OFFSET + 64;
+const TOTAL_LEN: usize = MESSAGE_OFFSET + PERMIT_LEN;
 
 /// Verify that the instruction is a canonical single-signature Ed25519
 /// precompile instruction and return its message.
@@ -29,15 +34,16 @@ pub fn verify_instruction(instruction: &Instruction, sentinel_key: &Pubkey) -> R
     let data = &instruction.data;
     require!(data.len() == TOTAL_LEN, LiliaError::InvalidEd25519Instruction);
 
-    let num_signatures = u16::from_le_bytes([data[0], data[1]]);
-    require_eq!(num_signatures, 1, LiliaError::InvalidEd25519Instruction);
+    let num_signatures = data[0];
+    require_eq!(num_signatures, 1u8, LiliaError::InvalidEd25519Instruction);
 
-    let signature_offset = u16::from_le_bytes([data[4], data[5]]) as usize;
-    let signature_instruction_index = u16::from_le_bytes([data[6], data[7]]);
-    let public_key_offset = u16::from_le_bytes([data[8], data[9]]) as usize;
-    let public_key_instruction_index = u16::from_le_bytes([data[10], data[11]]);
-    let message_offset = u16::from_le_bytes([data[12], data[13]]) as usize;
-    let message_size = u16::from_le_bytes([data[14], data[15]]) as usize;
+    let signature_offset = u16::from_le_bytes([data[2], data[3]]) as usize;
+    let signature_instruction_index = u16::from_le_bytes([data[4], data[5]]);
+    let public_key_offset = u16::from_le_bytes([data[6], data[7]]) as usize;
+    let public_key_instruction_index = u16::from_le_bytes([data[8], data[9]]);
+    let message_offset = u16::from_le_bytes([data[10], data[11]]) as usize;
+    let message_size = u16::from_le_bytes([data[12], data[13]]) as usize;
+    let message_instruction_index = u16::from_le_bytes([data[14], data[15]]);
 
     require_eq!(
         signature_instruction_index,
@@ -46,6 +52,11 @@ pub fn verify_instruction(instruction: &Instruction, sentinel_key: &Pubkey) -> R
     );
     require_eq!(
         public_key_instruction_index,
+        u16::MAX,
+        LiliaError::InvalidEd25519Instruction
+    );
+    require_eq!(
+        message_instruction_index,
         u16::MAX,
         LiliaError::InvalidEd25519Instruction
     );
@@ -90,13 +101,14 @@ mod tests {
 
     fn canonical_instruction(sentinel: &Pubkey, message: [u8; PERMIT_LEN]) -> Instruction {
         let mut data = vec![0u8; TOTAL_LEN];
-        data[0..2].copy_from_slice(&1u16.to_le_bytes());
-        data[4..6].copy_from_slice(&(SIGNATURE_OFFSET as u16).to_le_bytes());
-        data[6..8].copy_from_slice(&u16::MAX.to_le_bytes());
-        data[8..10].copy_from_slice(&(PUBLIC_KEY_OFFSET as u16).to_le_bytes());
-        data[10..12].copy_from_slice(&u16::MAX.to_le_bytes());
-        data[12..14].copy_from_slice(&(MESSAGE_OFFSET as u16).to_le_bytes());
-        data[14..16].copy_from_slice(&(PERMIT_LEN as u16).to_le_bytes());
+        data[0] = 1;
+        data[2..4].copy_from_slice(&(SIGNATURE_OFFSET as u16).to_le_bytes());
+        data[4..6].copy_from_slice(&u16::MAX.to_le_bytes());
+        data[6..8].copy_from_slice(&(PUBLIC_KEY_OFFSET as u16).to_le_bytes());
+        data[8..10].copy_from_slice(&u16::MAX.to_le_bytes());
+        data[10..12].copy_from_slice(&(MESSAGE_OFFSET as u16).to_le_bytes());
+        data[12..14].copy_from_slice(&(PERMIT_LEN as u16).to_le_bytes());
+        data[14..16].copy_from_slice(&u16::MAX.to_le_bytes());
         data[PUBLIC_KEY_OFFSET..PUBLIC_KEY_OFFSET + 32].copy_from_slice(&sentinel.to_bytes());
         data[MESSAGE_OFFSET..MESSAGE_OFFSET + PERMIT_LEN].copy_from_slice(&message);
         Instruction {
@@ -126,7 +138,7 @@ mod tests {
     fn rejects_non_canonical_offsets() {
         let sentinel = Pubkey::new_from_array([7u8; 32]);
         let mut ix = canonical_instruction(&sentinel, [9u8; PERMIT_LEN]);
-        ix.data[12] = 49;
+        ix.data[10] = 113;
         assert!(verify_instruction(&ix, &sentinel).is_err());
     }
 
@@ -136,5 +148,42 @@ mod tests {
         let mut ix = canonical_instruction(&sentinel, [9u8; PERMIT_LEN]);
         ix.program_id = Pubkey::new_from_array([1u8; 32]);
         assert!(verify_instruction(&ix, &sentinel).is_err());
+    }
+    fn from_hex(value: &str) -> Vec<u8> {
+        value
+            .as_bytes()
+            .chunks(2)
+            .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
+            .collect()
+    }
+
+    /// Byte-for-byte vector produced by `Ed25519Program.createInstructionWithPublicKey`
+    /// in @solana/web3.js. Guards the header field offsets and inline ordering.
+    #[test]
+    fn parses_web3js_inline_vector() {
+        let data = from_hex(concat!(
+            "01003000ffff1000ffff70003401ffff07070707070707070707070707070707",
+            "07070707070707070707070707070707abababababababababababababababab",
+            "abababababababababababababababababababababababababababababababab",
+            "abababababababababababababababab09090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "0909090909090909090909090909090909090909090909090909090909090909",
+            "09090909",
+        ));
+        assert_eq!(data.len(), TOTAL_LEN);
+        let ix = Instruction {
+            program_id: solana_sdk_ids::ed25519_program::ID,
+            accounts: vec![],
+            data,
+        };
+        let sentinel = Pubkey::new_from_array([7u8; 32]);
+        assert_eq!(verify_instruction(&ix, &sentinel).unwrap(), [9u8; PERMIT_LEN]);
     }
 }
