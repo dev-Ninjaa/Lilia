@@ -26,6 +26,8 @@
       ".anchor/**",
       "test-ledger",
       "test-ledger/**",
+      ".devnet",
+      ".devnet/**",
       "packages/solana/src/idl"
     ]
   }
