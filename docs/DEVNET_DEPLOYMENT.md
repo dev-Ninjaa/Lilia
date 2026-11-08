@@ -33,3 +33,7 @@ Explorer: https://explorer.solana.com/address/51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8
 - The public faucet is closed, so `scripts/devnet/lib.ts` `ensureFunded` falls back to transferring SOL from the admin wallet.
 - Local-validator state from before this deployment is backed up outside the repo in `../Lilia-local-backup/`.
 - To redeploy an update: `anchor build` then `solana program deploy target/deploy/lilia.so --program-id target/deploy/lilia-keypair.json --url devnet`.
+
+## On-chain IDL
+
+The Anchor IDL is published on devnet (metadata account `CyRuUAato87GYGhn33yADzmYJyLxtQuLXAUZEtTumLxv`), so Explorer shows the "Program IDL" tab. Published with `anchor idl init --filepath target/idl/lilia.json`; update later with `anchor idl upgrade`.
