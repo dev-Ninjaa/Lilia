@@ -26,7 +26,7 @@ Lilia authorization permits are cryptographically signed messages that authorize
 1. **One permit authorizes exactly one transfer** - no reusable or multi-transfer permits
 2. **Permits bind all critical transfer parameters** - amount, accounts, mint, policy, expiry
 3. **Backend signatures are verified on-chain** - via Ed25519 precompile instruction
-4. **Nonces prevent replay attacks** - each permit can only be consumed once
+4. **A per-agent sequence prevents replay** - each permit is bound to one live sequence value
 5. **Expiry is slot-based** - deterministic on-chain validation without timestamps
 
 **Architecture:**
@@ -61,7 +61,7 @@ Lilia authorization permits are cryptographically signed messages that authorize
       │                                   │                                   │
       │                                   │  9. Hook validates permit fields  │
       │                                   │                                   │
-      │                                   │ 10. Hook consumes nonce PDA       │
+      │                                   │ 10. Hook consumes the sequence    │
       │                                   │                                   │
       │                                   │ 11. Transfer succeeds or fails    │
       │                                   │                                   │
@@ -404,48 +404,34 @@ require!(
 
 ### Nonce Format (v2.0)
 
-**Generate 32-byte nonce:**
+**Layout:** `sequence (u64 little-endian, 8 bytes) || entropy (24 random bytes)`
+= 32 bytes total. The sequence is the replay guard; the entropy keeps nonces
+unpredictable.
 
 ```typescript
 import { randomBytes } from 'node:crypto';
 
-function generateNonce(): string {
-  const bytes = randomBytes(32);
-  return bytes.toString('hex');  // 64 hex characters
+function buildNonce(sequence: bigint): Uint8Array {
+  const nonce = new Uint8Array(32);
+  const view = new DataView(nonce.buffer);
+  view.setBigUint64(0, sequence, true);   // little-endian sequence
+  randomBytes(24).copy?.(nonce, 8);       // in practice: nonce.set(randomBytes(24), 8)
+  return nonce;
 }
-
-// Example: "a3f5e9c2d8b1f4a7e6c3d9b2f1a8e5c4d7b3f6a9e2c8d1b5f4a7e3c9d6b2f8a5c1"
 ```
 
-**Convert UUID to 32-byte hex (migration):**
-
-```typescript
-function uuidToNonce(uuid: string): string {
-  // Remove hyphens from UUID
-  const hex = uuid.replace(/-/g, '');  // 32 hex chars
-  
-  // Pad to 64 hex chars (32 bytes)
-  return hex.padEnd(64, '0');
-}
-
-// Example:
-// UUID: "aaa6960f-9b47-4e22-a105-39b46b687051"
-// Nonce: "aaa6960f9b474e22a10539b46b687051000000000000000000000000000000"
-```
-
-**On-chain PDA derivation:**
+**On-chain sequence read:**
 
 ```rust
-// Convert hex string to byte array
-let nonce_bytes = hex::decode(permit.nonce)
-    .map_err(|_| ErrorCode::InvalidNonce)?;
-
-// Derive authorization PDA
-let (authorization_pda, bump) = Pubkey::find_program_address(
-    &[b"authorization", &nonce_bytes],
-    program_id
+// The permit must carry exactly the counter's current value
+require!(
+    permit.sequence() == registry.next_authorization_sequence,
+    LiliaError::InvalidSequence
 );
 ```
+
+There is no `authorization` PDA and no hex-encoded nonce field; the permit
+carries the raw 32 bytes at offset 276..308.
 
 ### Canonical Serialization (v2.0)
 
@@ -663,7 +649,7 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
         ErrorCode::DecimalsMismatch
     );
     
-    // 9. Validate on-chain policy (if present)
+    // 9. Validate on-chain policy
     let policy = &ctx.accounts.policy;
     require_eq!(
         policy.policy_version,
@@ -671,14 +657,21 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
         ErrorCode::PolicyVersionMismatch
     );
     require!(policy.is_active, ErrorCode::PolicyInactive);
-    
-    // 10. Check and consume nonce
-    let authorization_pda = &ctx.accounts.authorization;
     require!(
-        authorization_pda.nonce == permit.nonce,
-        ErrorCode::NonceMismatch
+        permit.amount <= policy.max_transfer_amount,
+        ErrorCode::AmountExceedsPolicy
     );
-    // PDA existence check prevents replay
+
+    // 10. Check and consume the sequence
+    let registry = &mut ctx.accounts.agent_registry;
+    require!(
+        permit.sequence() == registry.next_authorization_sequence,
+        ErrorCode::InvalidSequence
+    );
+    registry.next_authorization_sequence = registry
+        .next_authorization_sequence
+        .checked_add(1)
+        .ok_or(ErrorCode::SequenceOverflow)?;
     
     // 11. Emit event
     emit!(TransferAuthorized {
@@ -700,84 +693,47 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
 
 ### Replay Prevention (v2.0)
 
-**Strategy:** Use deterministic PDA-based authorization records.
+**Strategy:** A monotonic per-agent sequence counter stored on-chain in
+`AgentRegistry.next_authorization_sequence`. There is **no per-transfer
+`AuthorizationRecord` PDA**, so replay protection costs no extra account and no
+rent.
 
-**PDA Derivation:**
+**Permit binding:** the 32-byte nonce is `sequence (u64 LE) || entropy (24 bytes)`.
+The backend assigns the sequence from the **on-chain** counter, and the 24
+random bytes keep future nonces unpredictable.
+
+**On-chain enforcement (inside the transfer hook):**
 
 ```rust
-let nonce_bytes = hex::decode(&permit.nonce)?;
+let registry = &mut ctx.accounts.agent_registry;
 
-let (authorization_pda, bump) = Pubkey::find_program_address(
-    &[b"authorization", &nonce_bytes],
-    &program_id
+require!(
+    permit.sequence() == registry.next_authorization_sequence,
+    LiliaError::InvalidSequence
 );
+
+registry.next_authorization_sequence = registry
+    .next_authorization_sequence
+    .checked_add(1)
+    .ok_or(LiliaError::SequenceOverflow)?;
 ```
 
-**Authorization Record Account:**
+**Properties:**
 
-```rust
-#[account]
-pub struct AuthorizationRecord {
-    pub nonce: [u8; 32],
-    pub agent: Pubkey,
-    pub consumed_at_slot: u64,
-    pub bump: u8,
-}
+1. **Exact match required.** A permit whose sequence is below the counter (a
+   replay) or above it (a pre-minted permit) is rejected.
+2. **Atomic.** The increment happens in the same transaction as the transfer.
+   If the transfer fails for any reason the whole transaction reverts and the
+   counter is unchanged, so a failed attempt cannot burn a permit.
+3. **No cleanup.** Nothing is created that must later be closed; the guard is a
+   single `u64` inside the existing `AgentRegistry` account.
+4. **Concurrency.** Two permits carrying the same sequence cannot both land:
+   the second transaction observes the incremented counter and fails with
+   `InvalidSequence`.
 
-impl AuthorizationRecord {
-    pub const LEN: usize = 8 + 32 + 32 + 8 + 1;  // discriminator + fields
-}
-```
-
-**Creation (during transfer hook execution):**
-
-```rust
-#[derive(Accounts)]
-pub struct TransferHookExecute<'info> {
-    // ... other accounts ...
-    
-    #[account(
-        init,
-        payer = authority,
-        space = AuthorizationRecord::LEN,
-        seeds = [b"authorization", permit.nonce.as_ref()],
-        bump
-    )]
-    pub authorization: Account<'info, AuthorizationRecord>,
-}
-
-// In execute function:
-authorization.set_inner(AuthorizationRecord {
-    nonce: permit.nonce,
-    agent: permit.agent_public_key,
-    consumed_at_slot: clock.slot,
-    bump,
-});
-```
-
-**Replay Prevention Logic:**
-
-1. **First use:** PDA does not exist → `init` succeeds → transfer allowed
-2. **Replay attempt:** PDA exists → `init` fails → transfer rejected
-3. **Cleanup:** Authorization PDAs can be closed after expiry to reclaim rent
-
-**Cleanup Instruction:**
-
-```rust
-pub fn close_authorization(ctx: Context<CloseAuthorization>) -> Result<()> {
-    let clock = Clock::get()?;
-    let auth = &ctx.accounts.authorization;
-    
-    // Only allow cleanup after reasonable time (e.g., 1 hour = ~9000 slots)
-    require!(
-        clock.slot > auth.consumed_at_slot + 9000,
-        ErrorCode::AuthorizationTooRecent
-    );
-    
-    // Close account and reclaim rent
-    Ok(())
-}
-```
+Before incrementing, the hook also rejects an expired permit
+(`expires_at_slot`) and any transfer-authority, source, destination, mint,
+decimals, or amount mismatch.
 
 ---
 
@@ -897,11 +853,12 @@ async function verifyPermit(permit: Permit): Promise<void> {
 - `permit_hash` column has UNIQUE constraint
 - Prevents duplicate permits at backend level
 
-✅ **PDA-based Consumption (v2.0)**
-- Authorization PDA derived from nonce
-- PDA existence = nonce consumed
-- Atomic initialization prevents race conditions
-- Cannot replay after PDA creation
+✅ **Sequence Consumption (v2.0)**
+- Permit carries `sequence (u64) || entropy (24 bytes)` as its nonce
+- The hook requires an exact match with `AgentRegistry.next_authorization_sequence`
+- The counter is incremented in the same transaction as the transfer
+- A replay or pre-minted permit fails with `InvalidSequence`
+- No per-transfer account, rent, or cleanup is required
 
 ### Time-Based Security
 

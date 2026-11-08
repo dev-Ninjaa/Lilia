@@ -1,13 +1,27 @@
-# Lilia REST backend
+# Lilia
 
-Initial backend for the Lilia agent transaction security service. This repository contains the REST API and persistent SQLite storage only; it does not include Solana execution, an MCP server, or a frontend.
+Lilia is an agent transaction security service with a Bun/Fastify REST backend, SQLite persistence, and a Solana Token-2022 transfer hook that enforces signed permits on-chain.
+
+## Repository layout
+
+| Path | Purpose |
+|---|---|
+| `apps/api` | Fastify REST API |
+| `apps/web` | Next.js control center (separate workspace) |
+| `packages/core` | Domain services, including Solana v2 issuance and submission |
+| `packages/solana` | PDA, Permit v2 codec, and transaction-building SDK |
+| `packages/schemas` | Zod request schemas |
+| `programs/lilia` | Anchor Token-2022 transfer-hook program |
+| `database` | SQLite schema and migrations |
+| `scripts` | Migration, key generation, and inspection utilities |
 
 ## Requirements
 
 - Bun (current stable release)
 - Node-compatible environment for the built-in cryptography APIs
+- Rust, Solana CLI, and Anchor CLI for the on-chain program
 
-## Setup
+## Backend setup
 
 ```powershell
 bun install
@@ -24,7 +38,34 @@ bun run db:migrate
 bun run dev
 ```
 
-The API listens on `http://localhost:4000` by default. See [API.md](./API.md) for all contracts and manual PowerShell requests.
+The API listens on `http://localhost:4000` by default. See [API.md](./docs/API.md) for all contracts and manual requests.
+
+## Solana setup
+
+The program ID is `51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz`. Build and test locally:
+
+```bash
+anchor build
+cargo test -p lilia
+bun test packages/solana
+```
+
+To enable the on-chain API flows, set these in `.env`:
+
+```env
+SOLANA_RPC_URL=https://api.devnet.solana.com
+SOLANA_RPC_COMMITMENT=confirmed
+LILIA_PROGRAM_ID=51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz
+LILIA_SENTINEL_PUBLIC_KEY=
+LILIA_ADMIN_KEYPAIR_PATH=/absolute/path/to/upgrade-authority.json
+LILIA_PERMIT_TTL_SLOTS=300
+```
+
+- `LILIA_SENTINEL_PUBLIC_KEY` is the base58 key stored in the on-chain `SentinelAuthority`. When empty it is derived from `LILIA_SIGNING_PUBLIC_KEY`.
+- `LILIA_ADMIN_KEYPAIR_PATH` must be the keypair whose public key is the on-chain `upgrade_authority`.
+- Without these settings the v2 endpoints return 503 and no transaction is fabricated.
+
+The program, Permit v2 codec, and v2 API flows are implemented but **not deployed** in this phase. See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full component map.
 
 ## Useful commands
 
@@ -38,5 +79,8 @@ The API listens on `http://localhost:4000` by default. See [API.md](./API.md) fo
 | `bun run db:migrate` | Apply pending migrations |
 | `bun run db:inspect` | Print database table row counts |
 | `bun run db:generate-key` | Generate an Ed25519 key pair |
+| `anchor build` | Build the Solana program and IDL |
+| `cargo test -p lilia` | Run Rust unit tests |
+| `bun test packages/solana` | Run Solana SDK tests |
 
-No automated test suite or tests directory is included.
+`apps/web` is a separate Next.js workspace with its own dependencies and lint configuration; it is excluded from the root TypeScript and Biome checks.

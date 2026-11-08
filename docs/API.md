@@ -202,12 +202,12 @@ For each endpoint, unless stated otherwise: header is `Content-Type: application
 
 #### 16. Submit transaction
 - **Method / URL:** `POST /api/transactions/submit`
-- **Purpose / auth:** Reserved submission boundary; Bearer required.
-- **Body:** `{"transactionId":"<uuid>","signedTransaction":"<base64-or-text>"}`; transaction UUID, non-empty signed payload max 100,000 chars.
-- **Success:** None in this phase.
-- **Errors / statuses:** 400 invalid schema, 401 unauthenticated, 503 `SOLANA_INTEGRATION_NOT_CONFIGURED` for valid schema.
-- **Validation / DB:** Schema is validated; no transaction update or signature is stored.
-- **Security / integration:** No RPC call is attempted and nothing is marked submitted/confirmed.
+- **Purpose / auth:** Broadcast a signed Solana v2 transaction and record confirmation; Bearer required.
+- **Body:** `{"transactionId":"<uuid>","signedTransaction":"<base64>"}`; transaction UUID, non-empty signed payload max 100,000 chars.
+- **Success:** 200 with `transactionId`, `status` (`submitted` or `confirmed`), `signature`, `slot`, and `confirmedAt`.
+- **Errors / statuses:** 400 invalid schema, 401 unauthenticated, 404 unknown transaction, 409 not submittable, 502 `SOLANA_SEND_FAILED` or `SOLANA_TRANSACTION_FAILED`, 503 `SOLANA_NOT_CONFIGURED` / legacy flow.
+- **Validation / DB:** Verifies ownership and `flowVersion=2`; sends the raw transaction, stores the signature, polls for confirmation, then marks the permit consumed and writes a `transaction.confirmed` event.
+- **Security / integration:** The backend never signs the transfer authority's key; the client signs and supplies the wire transaction.
 
 #### 17. List transaction intents
 - **Method / URL:** `GET /api/transactions`
@@ -325,6 +325,79 @@ For each endpoint, unless stated otherwise: header is `Content-Type: application
 - **Validation / DB:** Executes `SELECT 1`; does not expose environment variables or credentials.
 - **Security / integration:** Only basic health details are returned.
 
+### H. Solana v2 (Phase 3)
+
+These endpoints require `SOLANA_RPC_URL`; they return 503 `SOLANA_NOT_CONFIGURED` otherwise. The on-chain admin endpoints additionally require `LILIA_ADMIN_KEYPAIR_PATH` or `LILIA_ADMIN_KEYPAIR`.
+
+#### 29. Issue a Permit v2
+- **Method / URL:** `POST /api/v2/sentinel/authorize`
+- **Purpose / auth:** Sign a canonical 308-byte Permit v2 for an approved assessment; Bearer required.
+- **Body:** `{"assessmentId":"<uuid>","sourceTokenAccount":"<optional>","destinationTokenAccount":"<optional>","expiresInSlots":300}`. Token accounts default to the transfer authority/recipient ATAs.
+- **Success:** 201 with `permitVersion:2`, `sequence`, `agentRegistryPda`, `policyPda`, `policyVersion`, `transferAuthority`, source/destination accounts, `mint`, `mintDecimals`, raw `amount`, `expiresAtSlot`, hex `canonicalMessage`, base64url `signature`, `signerPublicKey`, `permitHash`, and `transactionId`.
+- **Errors / statuses:** 201, 400, 401, 404, 409 for `AGENT_NOT_ON_CHAIN`, `AGENT_IDENTITY_MISSING`, `POLICY_NOT_PUBLISHED`, `POLICY_VERSION_DRIFT`, `AMOUNT_EXCEEDS_POLICY`, or `MINT_NOT_ALLOWED`; 503 when Solana or signing is unconfigured.
+- **Validation / DB:** Reads the on-chain `AgentRegistry.next_authorization_sequence` (not the local mirror), verifies mint decimals and policy limits, signs the canonical message, stores the permit/transaction intent, and mirrors the next sequence.
+- **Security / integration:** The sequence is consumed atomically on-chain by the transfer hook; a failed transfer rolls it back.
+
+#### 30. Prepare a v2 transfer transaction
+- **Method / URL:** `POST /api/transactions/prepare-v2`
+- **Purpose / auth:** Build the Ed25519 precompile + Token-2022 transfer transaction; Bearer required.
+- **Body:** `{"permitId":"<uuid>","sender":"<transfer authority>","recipient":"<destination owner>","mint":"<mint>","amount":"100.5"}`.
+- **Success:** 201 with `transactionId`, `status:"prepared"`, `blockchainTransactionBuilt:true`, `blockhash`, `lastValidBlockHeight`, base64 unsigned `transaction`, and permit metadata.
+- **Errors / statuses:** 201, 400, 401, 404, 409 for version/expiry/sequence/detail mismatch or an unavailable intent; 503 when Solana is unconfigured.
+- **Validation / DB:** Re-verifies the canonical message hash and Sentinel signature, checks slot expiry and policy version, rebuilds the permit bytes and refuses if they differ, then stores the blockhash window.
+- **Security / integration:** The transaction must be signed by the transfer authority and fee payer; the API does not hold that key.
+
+#### 31. Record a client submission
+- **Method / URL:** `POST /api/v2/transactions/record-submission`
+- **Purpose / auth:** Record a signature the client broadcast itself; Bearer required.
+- **Body:** `{"permitId":"<uuid>","transactionSignature":"<base58>"}`.
+- **Success:** 200 with `transactionId`, `status:"confirmed"`, `signature`, `slot`, `confirmedAt`.
+- **Errors / statuses:** 200, 400, 401, 404 (`PERMIT_NOT_FOUND`, `TRANSACTION_NOT_FOUND`), 409 (`PERMIT_ALREADY_CONSUMED`), 502 `SOLANA_TRANSACTION_FAILED`.
+- **Validation / DB:** Fetches the transaction from RPC, rejects on-chain errors, marks the permit consumed and the transaction confirmed, and records a blockchain event. Idempotent for an already-confirmed signature.
+- **Security / integration:** A signature is only accepted when it is visible on the configured cluster and belongs to the permit's transaction intent.
+
+#### 32. Register an agent on-chain
+- **Method / URL:** `POST /api/agents/:agentId/register-on-chain`
+- **Purpose / auth:** Create the `AgentRegistry` PDA; Bearer required.
+- **Body:** `{"transferAuthority":"<base58>","agentIdentityKey":"<base58>"}`.
+- **Success:** 201 with the updated agent including `onChainRegistryPda` and `registrationTxSignature`.
+- **Errors / statuses:** 201, 400, 401, 404, 409 `AGENT_ALREADY_REGISTERED`, 503 when Solana/admin keys are unconfigured.
+- **Validation / DB:** Derives the PDA from the transfer authority, sends `register_agent` with the admin key, stores the PDA/signature, and resets the sequence mirror to `0`.
+- **Security / integration:** The admin key must be the on-chain `upgrade_authority`.
+
+#### 33. Toggle an agent on-chain
+- **Method / URL:** `POST /api/agents/:agentId/status-on-chain`
+- **Purpose / auth:** Enable/disable the on-chain registry; Bearer required.
+- **Body:** `{"isActive":false}`.
+- **Success:** 200 with the updated agent.
+- **Errors / statuses:** 200, 400, 401, 404, 409 `AGENT_NOT_ON_CHAIN`, 503.
+- **Validation / DB:** Sends `set_agent_status`, updates the local status, and records a blockchain event.
+
+#### 34. Publish a policy on-chain
+- **Method / URL:** `POST /api/policies/:policyId/publish-on-chain`
+- **Purpose / auth:** Create or update the on-chain `Policy` PDA; Bearer required.
+- **Body:** `{"mintDecimals":6}`.
+- **Success:** 200 with the updated policy including `onChainPolicyPda`, `onChainPolicyVersion`, and `publishTxSignature`.
+- **Errors / statuses:** 200, 400, 401, 404, 409 `POLICY_VERSION_DRIFT`, `POLICY_EXPIRED`, `AGENT_NOT_ON_CHAIN`, 503.
+- **Validation / DB:** Converts the decimal cap to raw units, maps `expiresAt` to a slot, and requires each backend revision to be published in order so the on-chain version matches the permit version.
+- **Security / integration:** Only the admin key can create/update policies; version drift fails closed.
+
+#### 35. Solana status
+- **Method / URL:** `GET /api/solana/status`
+- **Purpose / auth:** Report configuration and current slot; Bearer required.
+- **Success:** 200 `{"configured":true,"programId":"...","rpcUrl":"...","commitment":"confirmed","sentinelPublicKey":"...","adminConfigured":true,"latestSlot":123}`; `latestSlot` and `sentinelPublicKey` are `null` when unavailable.
+- **Errors / statuses:** 200, 401.
+- **Validation / DB:** Reads RPC slot only when configured; does not expose private keys.
+
+#### 36. Sentinel administration
+- **Method / URL:** `POST /api/solana/sentinel/initialize`, `POST /api/solana/sentinel/rotate`
+- **Purpose / auth:** Initialize or rotate the on-chain `SentinelAuthority`; Bearer + admin keypair required.
+- **Body:** `{"publicKey":"<base58>"}` or `{"newPublicKey":"<base58>"}`.
+- **Success:** 201/200 with `signature` and the sentinel PDA.
+- **Errors / statuses:** 200, 201, 400, 401, 503.
+- **Validation / DB:** Sends the corresponding Anchor instruction and writes an audit event.
+- **Security / integration:** Must be signed by the configured `upgrade_authority`.
+
 ## Permit format and transaction lifecycle
 
 The backend signs a compact UTF-8 JSON string using Ed25519. The exact canonical field order is:
@@ -339,7 +412,7 @@ Database lifecycle: evaluation creates an assessment; authorization creates an `
 
 ## Honest integration limits
 
-- **Solana:** no RPC client, transaction builder, submission, signature, or confirmation support. `POST /api/transactions/submit` returns 503.
+- **Solana:** the program, Permit v2 codec, and v2 API flows are implemented. They remain **inactive until `SOLANA_RPC_URL` and the key configuration are set**, and they have not been deployed or exercised against a live cluster in this phase. Without configuration the endpoints return 503 `SOLANA_NOT_CONFIGURED`; no transfer is ever simulated or marked confirmed.
 - **Gemini:** optional key is read only for truthful integration reporting; deterministic rules are the only evaluator and cannot be overridden.
 - **MCP:** not implemented. Shared core services are the intended future integration interface.
 
@@ -693,13 +766,13 @@ When a transaction is submitted with a v2.0 permit:
    - Sentinel public key matches configuration
    - Permit fields match transfer parameters
    - Permit not expired (slot-based check)
-   - Authorization PDA doesn't exist (prevents replay)
-4. **Transfer Hook** creates authorization PDA (consumes nonce)
+   - Permit sequence equals `AgentRegistry.next_authorization_sequence`
+4. **Transfer Hook** increments the sequence counter (consumes the permit)
 5. **Token-2022** completes transfer (if hook returns Ok)
 
 **Validation failures:**
 - `PermitExpired`: Current slot > expires_at_slot
-- `NonceAlreadyUsed`: Authorization PDA exists (replay attempt)
+- `InvalidSequence`: permit sequence is not the current on-chain sequence (replay or pre-minted)
 - `AmountMismatch`: Transfer amount ≠ permit amount
 - `SourceMismatch`: Source account ≠ permit source
 - `DestinationMismatch`: Destination ≠ permit destination

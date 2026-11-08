@@ -65,7 +65,7 @@ Token-2022 Transfer Process:
 - Validates the transfer against a Sentinel-signed permit
 - Checks permit signature (via Ed25519 precompile)
 - Validates transfer parameters match permit
-- Consumes nonce to prevent replay
+- Enforces and increments the per-agent sequence counter to prevent replay
 - Returns Ok() to allow or Err() to reject
 
 ❌ **The Transfer Hook Does NOT:**
@@ -235,21 +235,24 @@ require!(
 
 **Enforcement:**
 ```rust
-// Authorization PDA derived from unique nonce
-#[account(
-    init,  // CRITICAL: init prevents replay
-    payer = authority,
-    space = AuthorizationRecord::LEN,
-    seeds = [b"authorization", &permit.nonce],
-    bump
-)]
-pub authorization: Account<'info, AuthorizationRecord>,
+// Monotonic per-agent counter inside AgentRegistry
+let registry = &mut ctx.accounts.agent_registry;
+require!(
+    permit.sequence() == registry.next_authorization_sequence,
+    LiliaError::InvalidSequence
+);
+registry.next_authorization_sequence = registry
+    .next_authorization_sequence
+    .checked_add(1)
+    .ok_or(LiliaError::SequenceOverflow)?;
 ```
 
 **Verification:**
-- First use: PDA does not exist → `init` succeeds
-- Replay: PDA exists → `init` fails with `AccountAlreadyInitialized`
-- Nonce is 32 bytes random (2^256 collision resistance)
+- First use: sequence equals the counter -> accepted, counter incremented
+- Replay: sequence is below the counter -> `InvalidSequence`
+- Pre-minted permit: sequence is above the counter -> `InvalidSequence`
+- No per-transfer account is created, so there is no rent and nothing to clean up
+- `AgentRegistry` is resolved as a writable extra account so the increment persists
 
 ### Property 3: Parameter Integrity
 
@@ -354,21 +357,19 @@ require!(
 await submitTransfer(validPermit);
 
 // Attempt replay
-await submitTransfer(validPermit);  // Same nonce
+await submitTransfer(validPermit);  // Same sequence
 ```
 
 **Mitigation:**
 ```rust
-// Authorization PDA created on first use
-#[account(
-    init,  // Fails if PDA already exists
-    seeds = [b"authorization", &permit.nonce],
-    bump
-)]
-pub authorization: Account<'info, AuthorizationRecord>,
+// The counter has advanced past this permit's sequence
+require!(
+    permit.sequence() == registry.next_authorization_sequence,
+    LiliaError::InvalidSequence
+);
 ```
 
-**Result:** ✅ Attack fails - `AccountAlreadyInitialized` error
+**Result:** ✅ Attack fails - `InvalidSequence` error
 
 ### Attack 3: Amount Manipulation
 
@@ -544,26 +545,29 @@ require_keys_eq!(
 
 **Result:** ✅ Attack fails - Ed25519 instruction missing
 
-### Attack 10: Nonce Prediction
+### Attack 10: Sequence Prediction
 
-**Attack:** Attacker predicts future nonces to pre-create authorization PDAs.
+**Attack:** Attacker predicts the next sequence to pre-mint a permit.
 
 **Vector:**
 ```rust
-// Attacker tries to guess nonce
-let predicted_nonce = [0u8; 32];  // All zeros
-
-// Pre-create authorization PDA
-create_authorization_pda(predicted_nonce);
+// Attacker guesses the next sequence
+let predicted_sequence = 0u64;
 ```
 
 **Mitigation:**
-- Nonces are 32-byte cryptographically random values
-- Collision probability: 1 in 2^256 ≈ negligible
-- Even if predicted, PDA creation requires rent payment
-- Backend never reuses nonces
+- The sequence alone is not enough: the permit must also carry a valid
+  Sentinel signature over the full 308-byte message, including the transfer
+  authority, source, destination, mint, amount, and expiry.
+- The backend reads `next_authorization_sequence` from chain at issuance, so a
+  stale or guessed value is rejected with `InvalidSequence`.
+- The nonce is `sequence || 24 random bytes`, so a predicted sequence still does
+  not determine the permit bytes.
+- Minting a permit for a future sequence does not help: the hook requires an
+  exact match, so it fails until the counter reaches that value, and by then the
+  permit has expired.
 
-**Result:** ✅ Attack infeasible - nonce space is 2^256
+**Result:** ✅ Attack infeasible - permit requires a Sentinel signature and an exact live sequence
 
 ---
 
@@ -610,10 +614,10 @@ create_authorization_pda(predicted_nonce);
 - [ ] Amount <= max transfer amount
 - [ ] Mint matches allowed mint (if specified)
 
-**6. Nonce Consumption**
-- [ ] Authorization PDA derived correctly
-- [ ] PDA initialization succeeds (not already initialized)
-- [ ] Authorization record populated with nonce, agent, slot
+**6. Sequence Consumption**
+- [ ] `AgentRegistry` resolved as a writable extra account
+- [ ] Permit sequence equals `next_authorization_sequence`
+- [ ] Counter incremented with a checked add
 
 **7. Event Emission**
 - [ ] TransferAuthorized event emitted
@@ -660,10 +664,10 @@ create_authorization_pda(predicted_nonce);
    - Expired slot rejected
    - Boundary conditions tested
 
-5. **Nonce Consumption**
+5. **Sequence Consumption**
    - First use succeeds
-   - Replay attempt fails
-   - Different nonce succeeds
+   - Replay attempt fails with `InvalidSequence`
+   - A permit for a future sequence fails
 
 ### Integration Tests
 
@@ -674,7 +678,7 @@ create_authorization_pda(predicted_nonce);
    - Request authorization → receive permit
    - Build transaction → submit
    - Transfer succeeds
-   - Authorization consumed
+   - Sequence incremented
 
 2. **Replay Prevention**
    - Use permit once → success
@@ -736,11 +740,11 @@ create_authorization_pda(predicted_nonce);
 
 **Metrics to Measure:**
 
-- Authorization PDA creation cost
+- Sequence check and increment cost
 - Transfer Hook execution compute units
 - Transaction size overhead
 - Confirmation latency
-- Cleanup bot efficiency
+- No cleanup required (no per-transfer accounts)
 
 ---
 
@@ -805,7 +809,7 @@ create_authorization_pda(predicted_nonce);
 
 1. **Trusted Sentinel:** Backend private key must be secured
 2. **Slot Timing:** Expiry based on ~400ms average (not guaranteed)
-3. **Storage Costs:** Per-transfer authorization PDAs (mitigated by cleanup)
+3. **Storage Costs:** One `AgentRegistry` and one `Policy` per agent; no per-transfer accounts
 4. **MVP Scope:** On-chain policy validation optional (backend-only mode)
 
 ### Post-Audit Actions
@@ -830,10 +834,10 @@ create_authorization_pda(predicted_nonce);
 - [ ] No signature malleability
 
 ✅ **Replay Prevention:**
-- [ ] Nonce PDA derivation correct
-- [ ] Init constraint prevents replay
-- [ ] Nonce is cryptographically random
-- [ ] No nonce reuse by backend
+- [ ] Permit sequence compared against the on-chain counter
+- [ ] Counter incremented atomically with the transfer
+- [ ] 24 bytes of entropy in the nonce
+- [ ] No sequence reuse by backend
 
 ✅ **Validation:**
 - [ ] All transfer parameters validated

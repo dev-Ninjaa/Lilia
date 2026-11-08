@@ -14,7 +14,7 @@
 4. [SentinelAuthority Account](#sentinelauthority-account)
 5. [AgentRegistry Account](#agentregistry-account)
 6. [Policy Account](#policy-account)
-7. [AuthorizationRecord Account](#authorizationrecord-account)
+7. [Replay Protection: Sequence Counter](#replay-protection-sequence-counter)
 8. [ExtraAccountMetaList Account](#extraaccountmetalist-account)
 9. [Account Initialization](#account-initialization)
 10. [Account Closure and Rent Reclamation](#account-closure-and-rent-reclamation)
@@ -37,7 +37,7 @@ This document specifies all on-chain account structures for the Lilia Transfer H
 2. **Minimal Storage:** Store only data required for on-chain validation
 3. **Explicit Sizes:** All account sizes calculated upfront (no dynamic allocation)
 4. **Rent Optimization:** Accounts sized precisely to minimize rent costs
-5. **Cleanup Support:** Authorization records closeable after consumption
+5. **No Per-Transfer Accounts:** Replay protection is a counter, so nothing is created per transfer
 
 ---
 
@@ -89,25 +89,30 @@ const [pda, bump] = PublicKey.findProgramAddressSync(
 | Account | PDA Seeds | Size (bytes) | Rent (SOL)* | Closeable | Purpose |
 |---------|-----------|--------------|-------------|-----------|---------|
 | `SentinelAuthority` | `[b"sentinel"]` | 73 | 0.00063 | No | Sentinel public key configuration |
-| `AgentRegistry` | `[b"agent", agent_id]` | 114 | 0.00093 | Yes | On-chain agent registry (optional MVP) |
-| `Policy` | `[b"policy", policy_id]` | 162 | 0.00130 | Yes | On-chain policy data (optional MVP) |
-| `AuthorizationRecord` | `[b"authorization", nonce]` | 81 | 0.00067 | Yes | Nonce consumption tracking |
+| `AgentRegistry` | `[b"agent", transfer_authority]` | 138 | 0.00112 | Yes | Agent identity, liveness, and sequence counter |
+| `Policy` | `[b"policy", transfer_authority]` | 142 | 0.00115 | Yes | On-chain policy data |
 | `ExtraAccountMetaList` | `[b"extra-account-metas", mint]` | Variable | Variable | No | Transfer Hook extra accounts |
 
 *Rent estimates based on 0.00000348 SOL per byte (subject to change)
 
+There is **no `AuthorizationRecord` account**. Replay prevention uses the
+`next_authorization_sequence` counter inside `AgentRegistry`, so no per-transfer
+account is created and no rent is consumed.
+
 ### MVP vs. Full Implementation
 
 **MVP (Minimum Viable Product):**
-- ✅ Required: `SentinelAuthority`, `AuthorizationRecord`, `ExtraAccountMetaList`
-- ⚠️ Optional: `AgentRegistry`, `Policy` (backend signs, on-chain validates signature only)
+- ✅ Required: `SentinelAuthority`, `AgentRegistry`, `Policy`, `ExtraAccountMetaList`
+- ✅ `AgentRegistry` is also the replay guard
 
 **Full Implementation:**
 - ✅ All accounts
 - ✅ On-chain policy validation
 - ✅ On-chain agent registry
 
-**Recommendation:** Start with MVP, add on-chain policy validation after proving core functionality.
+**Recommendation:** The implemented program ships the full set; there is no
+account-less intermediate mode because the sequence counter lives in
+`AgentRegistry`.
 
 ---
 
@@ -271,42 +276,34 @@ pub struct UpdateSentinelAuthority<'info> {
 
 ### Purpose
 
-(Optional MVP) Stores on-chain agent registration. Enables on-chain verification of agent identity and status.
+Stores per-agent on-chain state: identity, the wallet allowed to sign transfers,
+liveness, and the replay-guard sequence counter. There is exactly one registry
+per transfer authority.
 
 ### PDA Derivation
 
-**Seeds:** `[b"agent", agent_id.as_bytes()]`
+**Seeds:** `[b"agent", transfer_authority]`
 
 **Example:**
 ```
-agent_id = "14414925-4284-4be6-82ab-911ba754976d"
-seeds = [b"agent", b"14414925-4284-4be6-82ab-911ba754976d"]
+transfer_authority = 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
+seeds = [b"agent", transfer_authority.to_bytes()]
 ```
 
 **Rust:**
 ```rust
-pub fn get_agent_registry_address(
-    agent_id: &str,
-    program_id: &Pubkey
-) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &[b"agent", agent_id.as_bytes()],
-        program_id
-    )
-}
+Pubkey::find_program_address(
+    &[AGENT_SEED, transfer_authority.as_ref()],
+    program_id
+)
 ```
 
 **TypeScript:**
 ```typescript
-function getAgentRegistryAddress(
-  agentId: string,
-  programId: PublicKey
-): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from("agent"), Buffer.from(agentId)],
-    programId
-  );
-}
+PublicKey.findProgramAddressSync(
+  [Buffer.from("agent"), transferAuthority.toBuffer()],
+  programId
+);
 ```
 
 ### Account Layout
@@ -314,92 +311,91 @@ function getAgentRegistryAddress(
 ```rust
 #[account]
 pub struct AgentRegistry {
-    /// Backend agent UUID (36 bytes + 4 length prefix)
-    pub agent_id: String,
-    
-    /// Agent's public key (32 bytes)
-    pub public_key: Pubkey,
-    
-    /// Owner/operator of this agent (32 bytes)
+    /// 16-byte backend identifier (first 16 bytes of the agent UUID)
+    pub agent_id: [u8; 16],
+    /// Backend agent identity key bound into the permit
+    pub agent_identity_key: Pubkey,
+    /// Wallet allowed to sign transfers for this agent
+    pub transfer_authority: Pubkey,
+    /// Backend owner that registered the agent
     pub owner: Pubkey,
-    
-    /// Agent status: 0 = active, 1 = disabled (1 byte)
-    pub status: u8,
-    
-    /// Registration slot (8 bytes)
-    pub registered_at_slot: u64,
-    
-    /// PDA bump seed (1 byte)
+    /// Whether the agent may currently transfer
+    pub is_active: bool,
+    /// Next sequence value a permit must carry
+    pub next_authorization_sequence: u64,
+    /// Slot at which the agent was registered
+    pub registered_slot: u64,
+    /// PDA bump
     pub bump: u8,
 }
 
 impl AgentRegistry {
-    pub const LEN: usize = 8 + 40 + 32 + 32 + 1 + 8 + 1;  // 122 bytes
-    // 8: discriminator
-    // 40: agent_id (4 length + 36 UUID)
-    // 32: public_key
-    // 32: owner
-    // 1: status
-    // 8: registered_at_slot
-    // 1: bump
-    
-    pub const STATUS_ACTIVE: u8 = 0;
-    pub const STATUS_DISABLED: u8 = 1;
+    pub const LEN: usize = 8 + 16 + 32 + 32 + 32 + 1 + 8 + 8 + 1; // 138
 }
 ```
 
 **Memory Layout:**
 
-| Offset | Size | Field | Type | Description |
-|--------|------|-------|------|-------------|
-| 0-7 | 8 | discriminator | `[u8; 8]` | Anchor discriminator |
-| 8-11 | 4 | agent_id.len | `u32` | String length |
-| 12-47 | 36 | agent_id.data | `[u8; 36]` | UUID string bytes |
-| 48-79 | 32 | public_key | `Pubkey` | Agent identity key |
-| 80-111 | 32 | owner | `Pubkey` | Agent owner |
-| 112 | 1 | status | `u8` | 0=active, 1=disabled |
-| 113-120 | 8 | registered_at_slot | `u64` | Registration slot |
-| 121 | 1 | bump | `u8` | PDA bump |
-| **122** | **—** | **Total** | **—** | **Fixed size** |
+| Offset | Size | Field | Type |
+|--------|------|-------|------|
+| 0-7 | 8 | discriminator | `[u8; 8]` |
+| 8-23 | 16 | agent_id | `[u8; 16]` |
+| 24-55 | 32 | agent_identity_key | `Pubkey` |
+| 56-87 | 32 | transfer_authority | `Pubkey` |
+| 88-119 | 32 | owner | `Pubkey` |
+| 120 | 1 | is_active | `bool` |
+| 121-128 | 8 | next_authorization_sequence | `u64` |
+| 129-136 | 8 | registered_slot | `u64` |
+| 137 | 1 | bump | `u8` |
+| **138** | **—** | **Total** | **—** |
 
 ### Initialization
 
+Only the Sentinel's `upgrade_authority` may register an agent. The counter
+starts at `0`.
+
 ```rust
-pub fn register_agent(
+pub fn handler(
     ctx: Context<RegisterAgent>,
-    agent_id: String,
-    public_key: Pubkey,
+    agent_id: [u8; 16],
+    agent_identity_key: Pubkey,
 ) -> Result<()> {
-    require_eq!(agent_id.len(), 36, ErrorCode::InvalidAgentId);
-    
     let registry = &mut ctx.accounts.agent_registry;
     registry.agent_id = agent_id;
-    registry.public_key = public_key;
-    registry.owner = ctx.accounts.owner.key();
-    registry.status = AgentRegistry::STATUS_ACTIVE;
-    registry.registered_at_slot = Clock::get()?.slot;
+    registry.agent_identity_key = agent_identity_key;
+    registry.transfer_authority = ctx.accounts.transfer_authority.key();
+    registry.owner = ctx.accounts.upgrade_authority.key();
+    registry.is_active = true;
+    registry.next_authorization_sequence = 0;
+    registry.registered_slot = Clock::get()?.slot;
     registry.bump = ctx.bumps.agent_registry;
-    
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(agent_id: String)]
 pub struct RegisterAgent<'info> {
     #[account(
         init,
-        payer = payer,
+        payer = upgrade_authority,
         space = AgentRegistry::LEN,
-        seeds = [b"agent", agent_id.as_bytes()],
+        seeds = [AGENT_SEED, transfer_authority.key().as_ref()],
         bump
     )]
     pub agent_registry: Account<'info, AgentRegistry>,
-    
-    pub owner: Signer<'info>,
-    
+
+    /// CHECK: used as a seed and stored in the registry
+    pub transfer_authority: UncheckedAccount<'info>,
+
+    #[account(
+        seeds = [SENTINEL_SEED],
+        bump = sentinel_authority.bump,
+        has_one = upgrade_authority
+    )]
+    pub sentinel_authority: Account<'info, SentinelAuthority>,
+
     #[account(mut)]
-    pub payer: Signer<'info>,
-    
+    pub upgrade_authority: Signer<'info>,
+
     pub system_program: Program<'info, System>,
 }
 ```
@@ -407,18 +403,13 @@ pub struct RegisterAgent<'info> {
 ### Status Updates
 
 ```rust
-pub fn disable_agent(ctx: Context<UpdateAgentStatus>) -> Result<()> {
-    let registry = &mut ctx.accounts.agent_registry;
-    registry.status = AgentRegistry::STATUS_DISABLED;
-    
-    emit!(AgentDisabled {
-        agent_id: registry.agent_id.clone(),
-        slot: Clock::get()?.slot,
-    });
-    
+pub fn set_agent_status(ctx: Context<SetAgentStatus>, is_active: bool) -> Result<()> {
+    ctx.accounts.agent_registry.is_active = is_active;
     Ok(())
 }
 ```
+
+A disabled agent fails the hook with `AgentDisabled`.
 
 ---
 
@@ -426,23 +417,21 @@ pub fn disable_agent(ctx: Context<UpdateAgentStatus>) -> Result<()> {
 
 ### Purpose
 
-(Optional MVP) Stores on-chain policy configuration. Enables on-chain policy enforcement without trusting backend signatures alone.
+Holds the active on-chain policy for one transfer authority: the cap, allowed
+mint, expiry, liveness, and the monotonic version bound into permits. There is
+exactly one policy per transfer authority, replaced in place with an incremented
+version.
 
 ### PDA Derivation
 
-**Seeds:** `[b"policy", policy_id.as_bytes()]`
+**Seeds:** `[b"policy", transfer_authority]`
 
-**Rust:**
-```rust
-pub fn get_policy_address(
-    policy_id: &str,
-    program_id: &Pubkey
-) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &[b"policy", policy_id.as_bytes()],
-        program_id
-    )
-}
+**TypeScript:**
+```typescript
+PublicKey.findProgramAddressSync(
+  [Buffer.from("policy"), transferAuthority.toBuffer()],
+  programId
+);
 ```
 
 ### Account Layout
@@ -450,316 +439,125 @@ pub fn get_policy_address(
 ```rust
 #[account]
 pub struct Policy {
-    /// Backend policy UUID (36 bytes + 4 length)
-    pub policy_id: String,
-    
-    /// Associated agent registry PDA (32 bytes)
+    pub policy_id: [u8; 16],
     pub agent_registry: Pubkey,
-    
-    /// Policy owner (32 bytes)
     pub owner: Pubkey,
-    
-    /// Maximum transfer amount in base units (8 bytes)
     pub max_transfer_amount: u64,
-    
-    /// Allowed token mint (32 bytes, 0 = any mint)
-    pub allowed_mint: Option<Pubkey>,
-    
-    /// Policy status: 0 = active, 1 = inactive (1 byte)
+    pub allowed_mint: Pubkey,      // Pubkey::default() = any mint
     pub is_active: bool,
-    
-    /// Policy version number (4 bytes)
     pub policy_version: u32,
-    
-    /// Policy expiry slot (8 bytes, 0 = no expiry)
-    pub expires_at_slot: u64,
-    
-    /// PDA bump (1 byte)
+    pub expires_at_slot: u64,      // 0 = no expiry
     pub bump: u8,
 }
 
 impl Policy {
-    pub const LEN: usize = 8 + 40 + 32 + 32 + 8 + 33 + 1 + 4 + 8 + 1;  // 167 bytes
-    // 8: discriminator
-    // 40: policy_id (4 + 36)
-    // 32: agent_registry
-    // 32: owner
-    // 8: max_transfer_amount
-    // 33: allowed_mint (1 option tag + 32 pubkey)
-    // 1: is_active
-    // 4: policy_version
-    // 8: expires_at_slot
-    // 1: bump
+    pub const LEN: usize = 8 + 16 + 32 + 32 + 8 + 32 + 1 + 4 + 8 + 1; // 142
 }
 ```
 
 **Memory Layout:**
 
-| Offset | Size | Field | Type | Description |
-|--------|------|-------|------|-------------|
-| 0-7 | 8 | discriminator | `[u8; 8]` | Anchor discriminator |
-| 8-11 | 4 | policy_id.len | `u32` | String length |
-| 12-47 | 36 | policy_id.data | `[u8; 36]` | UUID bytes |
-| 48-79 | 32 | agent_registry | `Pubkey` | Associated agent PDA |
-| 80-111 | 32 | owner | `Pubkey` | Policy owner |
-| 112-119 | 8 | max_transfer_amount | `u64` | Max amount (base units) |
-| 120 | 1 | allowed_mint.tag | `u8` | 0=None, 1=Some |
-| 121-152 | 32 | allowed_mint.pubkey | `Pubkey` | Mint (if tag=1) |
-| 153 | 1 | is_active | `bool` | Active status |
-| 154-157 | 4 | policy_version | `u32` | Version number |
-| 158-165 | 8 | expires_at_slot | `u64` | Expiry slot (0=never) |
-| 166 | 1 | bump | `u8` | PDA bump |
-| **167** | **—** | **Total** | **—** | **Fixed size** |
+| Offset | Size | Field | Type |
+|--------|------|-------|------|
+| 0-7 | 8 | discriminator | `[u8; 8]` |
+| 8-23 | 16 | policy_id | `[u8; 16]` |
+| 24-55 | 32 | agent_registry | `Pubkey` |
+| 56-87 | 32 | owner | `Pubkey` |
+| 88-95 | 8 | max_transfer_amount | `u64` |
+| 96-127 | 32 | allowed_mint | `Pubkey` |
+| 128 | 1 | is_active | `bool` |
+| 129-132 | 4 | policy_version | `u32` |
+| 133-140 | 8 | expires_at_slot | `u64` |
+| 141 | 1 | bump | `u8` |
+| **142** | **—** | **Total** | **—** |
 
 ### Initialization
 
 ```rust
-pub fn create_policy(
+pub fn handler(
     ctx: Context<CreatePolicy>,
-    policy_id: String,
+    policy_id: [u8; 16],
     max_transfer_amount: u64,
-    allowed_mint: Option<Pubkey>,
+    allowed_mint: Pubkey,
     expires_at_slot: u64,
 ) -> Result<()> {
-    require_eq!(policy_id.len(), 36, ErrorCode::InvalidPolicyId);
-    require!(max_transfer_amount > 0, ErrorCode::InvalidMaxAmount);
-    
     let policy = &mut ctx.accounts.policy;
     policy.policy_id = policy_id;
     policy.agent_registry = ctx.accounts.agent_registry.key();
-    policy.owner = ctx.accounts.owner.key();
+    policy.owner = ctx.accounts.upgrade_authority.key();
     policy.max_transfer_amount = max_transfer_amount;
     policy.allowed_mint = allowed_mint;
     policy.is_active = true;
     policy.policy_version = 1;
     policy.expires_at_slot = expires_at_slot;
     policy.bump = ctx.bumps.policy;
-    
     Ok(())
-}
-
-#[derive(Accounts)]
-#[instruction(policy_id: String)]
-pub struct CreatePolicy<'info> {
-    #[account(
-        init,
-        payer = payer,
-        space = Policy::LEN,
-        seeds = [b"policy", policy_id.as_bytes()],
-        bump
-    )]
-    pub policy: Account<'info, Policy>,
-    
-    /// Associated agent registry
-    #[account(
-        seeds = [b"agent", agent_registry.agent_id.as_bytes()],
-        bump = agent_registry.bump,
-        constraint = agent_registry.owner == owner.key() @ ErrorCode::UnauthorizedOwner
-    )]
-    pub agent_registry: Account<'info, AgentRegistry>,
-    
-    pub owner: Signer<'info>,
-    
-    #[account(mut)]
-    pub payer: Signer<'info>,
-    
-    pub system_program: Program<'info, System>,
 }
 ```
 
 ### Updates
 
+`update_policy` requires the new version to be exactly the stored version plus
+one, so a permit can never be replayed against an older policy.
+
 ```rust
-pub fn update_policy(
-    ctx: Context<UpdatePolicy>,
-    max_transfer_amount: Option<u64>,
-    allowed_mint: Option<Option<Pubkey>>,
-) -> Result<()> {
-    let policy = &mut ctx.accounts.policy;
-    
-    if let Some(amount) = max_transfer_amount {
-        require!(amount > 0, ErrorCode::InvalidMaxAmount);
-        policy.max_transfer_amount = amount;
-    }
-    
-    if let Some(mint) = allowed_mint {
-        policy.allowed_mint = mint;
-    }
-    
-    policy.policy_version += 1;
-    
-    Ok(())
-}
+require_eq!(
+    new_version,
+    policy.policy_version.checked_add(1).ok_or(LiliaError::PolicyVersionMismatch)?,
+    LiliaError::PolicyVersionMismatch
+);
 ```
 
 ---
 
-## AuthorizationRecord Account
+## Replay Protection: Sequence Counter
 
 ### Purpose
 
-**Critical:** Prevents permit replay attacks by consuming nonces atomically. Once created, the nonce cannot be reused.
+Permit replay is prevented by a monotonic counter stored in `AgentRegistry`
+(`next_authorization_sequence`). There is **no per-transfer account**, so the
+guard consumes no extra rent and leaves nothing to clean up.
 
-### PDA Derivation
+### Binding
 
-**Seeds:** `[b"authorization", nonce_bytes]`
+The permit nonce is `sequence (u64 little-endian) || entropy (24 bytes)`.
+`PermitDataV2::sequence()` reads the first 8 bytes; the backend takes the value
+from the on-chain counter, never from local state.
 
-**Example:**
-```
-nonce = "a3f5e9c2d8b1f4a7e6c3d9b2f1a8e5c4d7b3f6a9e2c8d1b5f4a7e3c9d6b2f8a5c1"
-nonce_bytes = hex::decode(nonce) = [0xA3, 0xF5, ..., 0xC1] (32 bytes)
-seeds = [b"authorization", nonce_bytes]
-```
-
-**Rust:**
-```rust
-pub fn get_authorization_address(
-    nonce: &[u8; 32],
-    program_id: &Pubkey
-) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &[b"authorization", nonce],
-        program_id
-    )
-}
-```
-
-**TypeScript:**
-```typescript
-function getAuthorizationAddress(
-  nonceHex: string,
-  programId: PublicKey
-): [PublicKey, number] {
-  const nonceBytes = Buffer.from(nonceHex, 'hex');
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from("authorization"), nonceBytes],
-    programId
-  );
-}
-```
-
-### Account Layout
+### Enforcement
 
 ```rust
-#[account]
-pub struct AuthorizationRecord {
-    /// Nonce value (32 bytes)
-    pub nonce: [u8; 32],
-    
-    /// Agent that consumed this authorization (32 bytes)
-    pub agent: Pubkey,
-    
-    /// Slot when consumed (8 bytes)
-    pub consumed_at_slot: u64,
-    
-    /// PDA bump (1 byte)
-    pub bump: u8,
-}
+let registry = &mut ctx.accounts.agent_registry;
 
-impl AuthorizationRecord {
-    pub const LEN: usize = 8 + 32 + 32 + 8 + 1;  // 81 bytes
-    // 8: discriminator
-    // 32: nonce
-    // 32: agent
-    // 8: consumed_at_slot
-    // 1: bump
-}
+require!(
+    permit.sequence() == registry.next_authorization_sequence,
+    LiliaError::InvalidSequence
+);
+
+registry.next_authorization_sequence = registry
+    .next_authorization_sequence
+    .checked_add(1)
+    .ok_or(LiliaError::SequenceOverflow)?;
 ```
 
-**Memory Layout:**
+### Guarantees
 
-| Offset | Size | Field | Type | Description |
-|--------|------|-------|------|-------------|
-| 0-7 | 8 | discriminator | `[u8; 8]` | Anchor discriminator |
-| 8-39 | 32 | nonce | `[u8; 32]` | Nonce bytes |
-| 40-71 | 32 | agent | `Pubkey` | Agent public key |
-| 72-79 | 8 | consumed_at_slot | `u64` | Consumption slot |
-| 80 | 1 | bump | `u8` | PDA bump |
-| **81** | **—** | **Total** | **—** | **Fixed size** |
+1. **First use:** sequence equals the counter -> accepted, counter incremented.
+2. **Replay:** sequence is now below the counter -> `InvalidSequence`.
+3. **Pre-minted permit:** sequence above the counter -> `InvalidSequence`.
+4. **Atomicity:** the increment is part of the transfer transaction; a failed
+   transfer reverts it, so a failed attempt does not consume the sequence.
+5. **Concurrency:** the second of two transactions carrying the same sequence
+   observes the incremented counter and fails.
 
-### Initialization (During Transfer Hook)
+`AgentRegistry` is supplied as a **writable** extra account by
+`ExtraAccountMetaList`, which is what lets the hook persist the increment.
 
-**Critical:** The authorization PDA is created **during** the Transfer Hook execution, not beforehand.
+### Resetting the Counter
 
-```rust
-pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
-    // ... permit validation ...
-    
-    // Consume nonce by creating authorization PDA
-    let auth = &mut ctx.accounts.authorization;
-    auth.nonce = permit.nonce;
-    auth.agent = permit.agent_public_key;
-    auth.consumed_at_slot = Clock::get()?.slot;
-    auth.bump = ctx.bumps.authorization;
-    
-    Ok(())
-}
-
-#[derive(Accounts)]
-pub struct TransferHookExecute<'info> {
-    // ... other accounts ...
-    
-    /// Authorization record (nonce consumption)
-    /// CRITICAL: init constraint prevents replay
-    #[account(
-        init,
-        payer = authority,
-        space = AuthorizationRecord::LEN,
-        seeds = [b"authorization", &permit.nonce],
-        bump
-    )]
-    pub authorization: Account<'info, AuthorizationRecord>,
-    
-    /// CHECK: Token-2022 validates authority
-    #[account(mut)]
-    pub authority: UncheckedAccount<'info>,
-    
-    pub system_program: Program<'info, System>,
-}
-```
-
-**Replay Prevention Logic:**
-
-1. **First use:** PDA does not exist → `init` succeeds → transfer proceeds
-2. **Replay attempt:** PDA exists → `init` fails with `AccountAlreadyInitialized` → transfer rejected
-
-### Closure (Rent Reclamation)
-
-After a reasonable time (e.g., 1 hour = ~9,000 slots), authorization records can be closed to reclaim rent.
-
-```rust
-pub fn close_authorization(
-    ctx: Context<CloseAuthorization>
-) -> Result<()> {
-    let clock = Clock::get()?;
-    let auth = &ctx.accounts.authorization;
-    
-    // Only allow closure after 9,000 slots (~1 hour)
-    require!(
-        clock.slot > auth.consumed_at_slot + 9000,
-        ErrorCode::AuthorizationTooRecent
-    );
-    
-    // Close account and return rent to recipient
-    Ok(())
-}
-
-#[derive(Accounts)]
-pub struct CloseAuthorization<'info> {
-    #[account(
-        mut,
-        close = rent_recipient,
-        seeds = [b"authorization", authorization.nonce.as_ref()],
-        bump = authorization.bump
-    )]
-    pub authorization: Account<'info, AuthorizationRecord>,
-    
-    /// Receives reclaimed rent
-    /// CHECK: Any account can receive rent
-    #[account(mut)]
-    pub rent_recipient: UncheckedAccount<'info>,
-}
-```
+Re-registering an agent (closing and recreating its `AgentRegistry`) resets the
+counter to `0`. Backend mirrors are advisory only; issuance always reads the
+on-chain value.
 
 ---
 
@@ -799,10 +597,10 @@ use spl_tlv_account_resolution::state::ExtraAccountMetaList;
 ```
 
 **For Lilia (4 extra accounts):**
-- Sentinel authority PDA
-- Authorization record PDA (dynamic from instruction data)
-- Instructions Sysvar
-- System program
+- Sentinel authority PDA (`["sentinel"]`, read-only)
+- AgentRegistry PDA (`["agent", transfer_authority]`, writable)
+- Policy PDA (`["policy", transfer_authority]`, read-only)
+- Instructions sysvar
 
 **Size calculation:**
 ```
@@ -813,84 +611,52 @@ size = 4 + 4 + (4 * 35) = 148 bytes
 
 **One-time setup per mint:**
 
+The program builds the list itself; caller-supplied metas are ignored so a mint
+authority cannot redirect the hook to attacker-controlled accounts.
+
 ```rust
-use spl_transfer_hook_interface::instruction::ExecuteInstruction;
 use spl_tlv_account_resolution::{account::ExtraAccountMeta, seeds::Seed};
 
-pub fn initialize_extra_account_meta_list(
-    ctx: Context<InitializeExtraAccountMetaList>
-) -> Result<()> {
-    let extra_metas = vec![
-        // 1. Sentinel authority (static PDA)
+pub fn canonical_extra_account_metas() -> Result<Vec<ExtraAccountMeta>> {
+    Ok(vec![
+        // 5. SentinelAuthority PDA, read-only
         ExtraAccountMeta::new_with_seeds(
-            &[Seed::Literal { bytes: b"sentinel".to_vec() }],
-            false,  // is_signer
-            false,  // is_writable
+            &[Seed::Literal { bytes: SENTINEL_SEED.to_vec() }],
+            false,
+            false,
         )?,
-        
-        // 2. Authorization record (dynamic PDA from nonce in instruction)
+        // 6. AgentRegistry PDA, writable (sequence increment)
         ExtraAccountMeta::new_with_seeds(
             &[
-                Seed::Literal { bytes: b"authorization".to_vec() },
-                Seed::InstructionData {
-                    index: 276,  // Nonce offset in permit binary message
-                    length: 32,  // Nonce is 32 bytes
-                },
+                Seed::Literal { bytes: AGENT_SEED.to_vec() },
+                Seed::AccountKey { index: 3 }, // transfer authority
             ],
-            false,  // is_signer
-            true,   // is_writable (for init)
+            false,
+            true,
         )?,
-        
-        // 3. Instructions Sysvar (for Ed25519 introspection)
+        // 7. Policy PDA, read-only
+        ExtraAccountMeta::new_with_seeds(
+            &[
+                Seed::Literal { bytes: POLICY_SEED.to_vec() },
+                Seed::AccountKey { index: 3 },
+            ],
+            false,
+            false,
+        )?,
+        // 8. Instructions sysvar for Ed25519 introspection
         ExtraAccountMeta::new_with_pubkey(
-            &sysvar::instructions::ID,
-            false,  // is_signer
-            false,  // is_writable
+            &solana_sdk_ids::sysvar::instructions::ID,
+            false,
+            false,
         )?,
-        
-        // 4. System program (for authorization PDA init)
-        ExtraAccountMeta::new_with_pubkey(
-            &system_program::ID,
-            false,  // is_signer
-            false,  // is_writable
-        )?,
-    ];
-    
-    // Calculate required size
-    let account_size = ExtraAccountMetaList::size_of(extra_metas.len())?;
-    require_eq!(
-        ctx.accounts.extra_account_meta_list.data_len(),
-        account_size,
-        ErrorCode::InvalidAccountSize
-    );
-    
-    // Initialize list
-    let mut data = ctx.accounts.extra_account_meta_list.try_borrow_mut_data()?;
-    ExtraAccountMetaList::init::<ExecuteInstruction>(&mut data, &extra_metas)?;
-    
-    Ok(())
-}
-
-#[derive(Accounts)]
-pub struct InitializeExtraAccountMetaList<'info> {
-    /// CHECK: Validated by Token-2022
-    pub mint: UncheckedAccount<'info>,
-    
-    /// ExtraAccountMetaList PDA
-    /// CHECK: Initialized with correct size
-    #[account(
-        mut,
-        seeds = [b"extra-account-metas", mint.key().as_ref()],
-        bump
-    )]
-    pub extra_account_meta_list: UncheckedAccount<'info>,
-    
-    #[account(mut)]
-    pub payer: Signer<'info>,
-    
-    pub system_program: Program<'info, System>,
+    ])
 }
 ```
+
+Account index `3` of the hook instruction is the source owner/delegate, which is
+the transfer authority, so both dynamic PDAs are derived from it. Only the mint
+authority may initialize the list, and the account is sized with
+`ExtraAccountMetaList::size_of(4)`.
 
 ---
 
@@ -907,14 +673,14 @@ pub struct InitializeExtraAccountMetaList<'info> {
 
 3. Initialize `ExtraAccountMetaList` for each protected mint
 
-**Per-Agent Setup (Optional MVP):**
+**Per-Agent Setup:**
 
-4. Register `AgentRegistry` for each agent
+4. Register `AgentRegistry` for each agent (also creates the sequence counter)
 5. Create `Policy` for each policy
 
 **Per-Transfer:**
 
-6. `AuthorizationRecord` created automatically during Transfer Hook execution
+6. No account is created; the hook increments `next_authorization_sequence`
 
 ### Initialization Costs
 
@@ -922,9 +688,8 @@ pub struct InitializeExtraAccountMetaList<'info> {
 |---------|------|-------------|-----------|
 | `SentinelAuthority` | 73 bytes | 0.00063 | Yes (global) |
 | `ExtraAccountMetaList` | 148 bytes | 0.00119 | Per mint |
-| `AgentRegistry` | 122 bytes | 0.00099 | Per agent |
-| `Policy` | 167 bytes | 0.00135 | Per policy |
-| `AuthorizationRecord` | 81 bytes | 0.00067 | Per transfer |
+| `AgentRegistry` | 138 bytes | 0.00112 | Per agent |
+| `Policy` | 142 bytes | 0.00115 | Per policy |
 
 *Based on 0.00000348 SOL/byte (subject to change)
 
@@ -936,7 +701,6 @@ pub struct InitializeExtraAccountMetaList<'info> {
 | `ExtraAccountMetaList` | Mint creator/protocol | Per-mint setup |
 | `AgentRegistry` | Agent owner | Agent registration |
 | `Policy` | Policy owner | Policy creation |
-| `AuthorizationRecord` | Transfer authority | Transfer execution |
 
 ---
 
@@ -944,115 +708,66 @@ pub struct InitializeExtraAccountMetaList<'info> {
 
 ### Closeable Accounts
 
-| Account | Closeable? | When? | Rent Recipient |
-|---------|------------|-------|----------------|
-| `SentinelAuthority` | No | N/A | N/A |
-| `ExtraAccountMetaList` | No | N/A | N/A |
-| `AgentRegistry` | Yes | After disable + grace period | Owner |
-| `Policy` | Yes | After deactivation | Owner |
-| `AuthorizationRecord` | Yes | After consumption + 9,000 slots | Transfer authority |
+The implemented program does **not** expose close instructions. `AgentRegistry`
+and `Policy` persist for the life of the agent; disabling an agent or
+deactivating a policy does not reclaim rent. Adding a close path would require a
+new instruction plus a grace period, and is deliberately out of scope for this
+phase.
 
-### Closure Instructions
-
-**Close Agent Registry:**
-
-```rust
-pub fn close_agent_registry(
-    ctx: Context<CloseAgentRegistry>
-) -> Result<()> {
-    let registry = &ctx.accounts.agent_registry;
-    
-    require_eq!(
-        registry.status,
-        AgentRegistry::STATUS_DISABLED,
-        ErrorCode::AgentStillActive
-    );
-    
-    let clock = Clock::get()?;
-    // Require 7 days (~1,512,000 slots) after disable
-    require!(
-        clock.slot > registry.registered_at_slot + 1_512_000,
-        ErrorCode::GracePeriodNotElapsed
-    );
-    
-    Ok(())
-}
-
-#[derive(Accounts)]
-pub struct CloseAgentRegistry<'info> {
-    #[account(
-        mut,
-        close = rent_recipient,
-        seeds = [b"agent", agent_registry.agent_id.as_bytes()],
-        bump = agent_registry.bump,
-        has_one = owner
-    )]
-    pub agent_registry: Account<'info, AgentRegistry>,
-    
-    pub owner: Signer<'info>,
-    
-    /// CHECK: Owner receives rent
-    #[account(mut)]
-    pub rent_recipient: UncheckedAccount<'info>,
-}
-```
+| Account | Closeable? | Notes |
+|---------|------------|-------|
+| `SentinelAuthority` | No | Global, one-time |
+| `ExtraAccountMetaList` | No | Per mint |
+| `AgentRegistry` | No (not implemented) | Persists; holds the sequence counter |
+| `Policy` | No (not implemented) | Updated in place with a new version |
 
 ### Rent Reclamation Economics
 
-**Authorization Record Cleanup:**
-
-Assuming 1,000 transfers per day:
-- Created: 1,000 × 81 bytes = 81,000 bytes
-- Rent: 1,000 × 0.00067 SOL = 0.67 SOL/day
-- Closeable after: ~1 hour (9,000 slots)
-- Daily reclaim potential: ~0.67 SOL
-
-**Cleanup Strategy:**
-
-1. Run periodic cleanup bot
-2. Close authorizations older than 9,000 slots
-3. Return rent to treasury or fee payer
-4. Frequency: Every hour or daily (cost-benefit trade-off)
+**No per-transfer accounts:** because replay protection is a counter inside
+`AgentRegistry`, there is no growth in account count, no rent stream to reclaim,
+and no cleanup bot to run.
 
 ---
 
 ## Storage Cost Analysis
 
-### MVP Configuration
+*Rent based on ~0.00000348 SOL/byte.*
+
+### Single Agent
 
 **One-time costs:**
-- Sentinel authority: 0.00063 SOL
-- Extra account meta (USDC): 0.00119 SOL
-- **Total:** ~0.00182 SOL (~$0.00036 at $0.20/SOL)
+- `SentinelAuthority` (73 B): 0.00063 SOL
+- `ExtraAccountMetaList` (~148 B): 0.00119 SOL
+- `AgentRegistry` (138 B): 0.00112 SOL
+- `Policy` (142 B): 0.00115 SOL
+- **Total:** ~0.00409 SOL
 
-**Per-transfer costs:**
-- Authorization record: 0.00067 SOL
-- Closeable after 1 hour
-- **Net cost:** Near-zero if cleanup bot runs
+**Per transfer:** zero account growth. The only state change is the `u64`
+sequence counter inside `AgentRegistry`.
 
-### Full Configuration (100 agents, 100 policies)
+### 100 Agents
 
 **Setup costs:**
 - Sentinel authority: 0.00063 SOL
-- Extra account meta (USDC): 0.00119 SOL
-- 100 agent registries: 100 × 0.00099 = 0.099 SOL
-- 100 policies: 100 × 0.00135 = 0.135 SOL
-- **Total:** ~0.236 SOL (~$0.047 at $0.20/SOL)
+- Extra account meta: 0.00119 SOL
+- 100 agent registries: 100 × 0.00112 = 0.112 SOL
+- 100 policies: 100 × 0.00115 = 0.115 SOL
+- **Total:** ~0.229 SOL
 
-**Per-transfer costs:**
-- Authorization record: 0.00067 SOL
-- Closeable after 1 hour
+**Per transfer:** zero additional rent.
 
 ### Optimization Strategies
 
-1. **Lazy Registration:** Only register agents on-chain when needed
-2. **Backend Policy Mode:** Use MVP mode (backend signs, no on-chain policy)
-3. **Aggressive Cleanup:** Run cleanup bot every hour to reclaim rent
-4. **Batch Operations:** Group agent/policy registrations to save transaction fees
+1. **Lazy Registration:** Only register agents on-chain when they need to
+   transfer.
+2. **Shared mint:** One `ExtraAccountMetaList` serves every agent using that
+   mint.
+3. **No cleanup:** There are no per-transfer accounts to close, so no bot and no
+   ongoing rent stream.
 
 ---
 
-**Document Version:** 2.0  
-**Last Updated:** November 7, 2026  
-**Status:** Specification Complete  
-**Next Steps:** Implement Anchor program accounts and initialization instructions
+**Document Version:** 2.1  
+**Last Updated:** November 8, 2026  
+**Status:** Implemented and verified locally (build + unit tests); not yet deployed  
+**Next Steps:** Deploy to Devnet and initialize the mint, extra account metas, agents, and policies

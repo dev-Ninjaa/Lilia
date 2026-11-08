@@ -351,8 +351,8 @@ Phase 2 extends the Lilia backend to support **on-chain enforcement** of authori
 1. **Backend Signs, Chain Validates:** Backend issues cryptographic permits; Anchor program validates them on-chain
 2. **Client Builds Transactions:** Backend does NOT submit transactions; clients construct and submit them
 3. **Backward Compatible:** Permit v1.0 (backend-only) continues working alongside v2.0 (on-chain)
-4. **Minimal On-Chain Storage:** Store only data required for validation (MVP mode uses backend signatures only)
-5. **Atomic Nonce Consumption:** Authorization PDAs prevent permit replay attacks
+4. **Minimal On-Chain Storage:** One `AgentRegistry` and one `Policy` per agent; no per-transfer accounts
+5. **Atomic Sequence Consumption:** The per-agent counter prevents permit replay attacks
 
 ### Component Architecture
 
@@ -393,7 +393,7 @@ Phase 2 extends the Lilia backend to support **on-chain enforcement** of authori
 │  │  1. Ed25519 Precompile verifies Sentinel signature            │  │
 │  │  2. Token-2022 processes transfer                             │  │
 │  │  3. Transfer Hook validates permit                            │  │
-│  │  4. Authorization PDA prevents replay                         │  │
+│  │  4. Sequence counter prevents replay                          │  │
 │  │  5. Transfer completes or fails                               │  │
 │  │                                                                │  │
 │  └──────────────────────────────────────────────────────────────┘  │
@@ -645,34 +645,28 @@ pub struct SentinelAuthority {
     pub bump: u8,                    // 1 byte
 }
 
-// Authorization record (per transfer)
-#[account]
-pub struct AuthorizationRecord {
-    pub nonce: [u8; 32],            // 32 bytes
-    pub agent: Pubkey,              // 32 bytes
-    pub consumed_at_slot: u64,      // 8 bytes
-    pub bump: u8,                   // 1 byte
-}
-
-// Agent registry (optional MVP)
+// Agent registry, per transfer authority (138 bytes)
+// Also holds the replay guard: next_authorization_sequence
 #[account]
 pub struct AgentRegistry {
-    pub agent_id: String,           // 40 bytes (4 + 36)
-    pub public_key: Pubkey,         // 32 bytes
-    pub owner: Pubkey,              // 32 bytes
-    pub status: u8,                 // 1 byte
-    pub registered_at_slot: u64,    // 8 bytes
-    pub bump: u8,                   // 1 byte
+    pub agent_id: [u8; 16],                 // 16 bytes (UUID prefix)
+    pub agent_identity_key: Pubkey,         // 32 bytes
+    pub transfer_authority: Pubkey,         // 32 bytes
+    pub owner: Pubkey,                      // 32 bytes
+    pub is_active: bool,                    // 1 byte
+    pub next_authorization_sequence: u64,   // 8 bytes
+    pub registered_slot: u64,               // 8 bytes
+    pub bump: u8,                           // 1 byte
 }
 
-// Policy (optional MVP)
+// Policy, per transfer authority (142 bytes)
 #[account]
 pub struct Policy {
-    pub policy_id: String,                  // 40 bytes
+    pub policy_id: [u8; 16],                // 16 bytes
     pub agent_registry: Pubkey,             // 32 bytes
     pub owner: Pubkey,                      // 32 bytes
     pub max_transfer_amount: u64,           // 8 bytes
-    pub allowed_mint: Option<Pubkey>,       // 33 bytes
+    pub allowed_mint: Pubkey,               // 32 bytes (default = any)
     pub is_active: bool,                    // 1 byte
     pub policy_version: u32,                // 4 bytes
     pub expires_at_slot: u64,               // 8 bytes
@@ -685,19 +679,16 @@ pub struct Policy {
 ```typescript
 // Backend derives PDAs when issuing v2 permits
 const [agentRegistryPda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("agent"), Buffer.from(agentId)],
+  [Buffer.from("agent"), transferAuthority.toBuffer()],
   programId
 );
 
 const [policyPda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("policy"), Buffer.from(policyId)],
+  [Buffer.from("policy"), transferAuthority.toBuffer()],
   programId
 );
 
-const [authorizationPda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("authorization"), nonceBytes],
-  programId
-);
+// No per-transfer PDA: replay protection is the sequence counter above.
 ```
 
 ### Security Model
@@ -733,18 +724,22 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
     require_eq!(permit.amount, amount, ErrorCode::AmountMismatch);
     require_eq!(permit.mint_decimals, mint.decimals, ErrorCode::DecimalsMismatch);
     
-    // 7. Validate policy (optional)
-    if let Some(policy) = &ctx.accounts.policy {
-        require!(policy.is_active, ErrorCode::PolicyInactive);
-        require_eq!(policy.policy_version, permit.policy_version, ErrorCode::VersionMismatch);
-    }
-    
-    // 8. Consume nonce (prevents replay)
-    let auth = &mut ctx.accounts.authorization;
-    auth.nonce = permit.nonce;
-    auth.agent = permit.agent_public_key;
-    auth.consumed_at_slot = clock.slot;
-    auth.bump = ctx.bumps.authorization;
+    // 7. Validate policy
+    let policy = &ctx.accounts.policy;
+    require!(policy.is_active, ErrorCode::PolicyInactive);
+    require_eq!(policy.policy_version, permit.policy_version, ErrorCode::VersionMismatch);
+    require!(amount <= policy.max_transfer_amount, ErrorCode::AmountExceedsPolicy);
+
+    // 8. Consume the sequence (prevents replay)
+    let registry = &mut ctx.accounts.agent_registry;
+    require!(
+        permit.sequence() == registry.next_authorization_sequence,
+        ErrorCode::InvalidSequence
+    );
+    registry.next_authorization_sequence = registry
+        .next_authorization_sequence
+        .checked_add(1)
+        .ok_or(ErrorCode::SequenceOverflow)?;
     
     // 9. Emit event
     emit!(TransferAuthorized {
@@ -761,10 +756,10 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
 **Security Properties:**
 
 1. ✅ **Authorization:** Only Sentinel-signed permits accepted
-2. ✅ **Replay Prevention:** Nonce PDA prevents reuse
+2. ✅ **Replay Prevention:** The per-agent sequence counter prevents reuse
 3. ✅ **Parameter Integrity:** All fields validated on-chain
 4. ✅ **Expiry Enforcement:** Slot-based expiry checked
-5. ✅ **Policy Compliance:** On-chain policy validated (optional)
+5. ✅ **Policy Compliance:** On-chain policy is required and validated
 
 ### Error Handling
 
@@ -807,8 +802,8 @@ pub enum ErrorCode {
     #[msg("Permit has expired")]
     PermitExpired,
     
-    #[msg("Nonce already used (replay attempt)")]
-    NonceAlreadyUsed,
+    #[msg("Authorization sequence is invalid or already consumed")]
+    InvalidSequence,
     
     #[msg("Source token account mismatch")]
     SourceMismatch,
@@ -903,7 +898,7 @@ pub enum ErrorCode {
 
 - Permit issuance rate (v1 vs v2)
 - On-chain transfer success rate
-- Authorization PDA creation rate
+- Sequence increment rate
 - Average confirmation time
 - RPC call latency
 - Mint decimal cache hit rate
@@ -935,6 +930,62 @@ logger.info('Transaction confirmed', {
 ---
 
 **Architecture Version:** 2.0  
-**Last Updated:** November 7, 2026  
-**Status:** Phase 2 specification complete, implementation pending  
-**Next Steps:** Implement Solana RPC client, binary serialization, and Anchor Transfer Hook program
+**Last Updated:** November 8, 2026  
+**Status:** Phase 3 implementation complete (code + local build/tests); deployment and Devnet E2E pending  
+**Next Steps:** Deploy to Devnet, initialize the mint + ExtraAccountMetaList, and run the Phase 7 execution scripts
+
+## Phase 3 Implementation Status (November 2026)
+
+### On-chain program
+
+`programs/lilia` is an Anchor 1.2.2 Token-2022 transfer-hook program:
+
+- `SentinelAuthority` PDA (`["sentinel"]`) stores the trusted Ed25519 key and upgrade authority.
+- `AgentRegistry` PDA (`["agent", transfer_authority]`) stores identity, liveness, and `next_authorization_sequence`.
+- `Policy` PDA (`["policy", transfer_authority]`) stores the cap, allowed mint, expiry slot, active flag, and version.
+- `ExtraAccountMetaList` PDA (`["extra-account-metas", mint]`) resolves SentinelAuthority, AgentRegistry (writable), Policy, and the Instructions sysvar.
+- `execute` verifies the immediately preceding Ed25519 instruction, parses the 308-byte Permit v2, checks slot expiry, transfer authority/source/destination/mint/decimals/amount, agent liveness, sequence, and policy version/cap/mint, then increments the sequence.
+
+No per-transfer `AuthorizationRecord` PDA exists; replay protection is the sequence counter.
+
+### Client and backend
+
+- `packages/solana` provides PDA derivation, Permit v2 serialization, Ed25519 + Token-2022 transaction building, and an Anchor client.
+- `packages/core/src/solana` provides the RPC connection, Sentinel key derivation/signing/verification, admin keypair loading, on-chain administration, and sequence reads.
+- `PermitV2Service` issues canonical permits using the **on-chain** sequence.
+- `TransactionV2Service` builds the transfer transaction (`prepare`), broadcasts (`submit`), or records a client-broadcast signature (`recordSubmission`).
+- `SolanaAdminService` orchestrates agent registration, status changes, policy publishing, and Sentinel administration with database persistence and audit events.
+
+### Data model
+
+Migration `0002_solana_v2.sql` adds nullable/defaulted v2 columns to agents, policies, permits, and transactions, so v1 records and endpoints remain valid. Each new column is additive; no table is rewritten.
+
+### Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/v2/sentinel/authorize` | Issue Permit v2 |
+| POST | `/api/transactions/prepare-v2` | Build Ed25519 + Token-2022 transfer |
+| POST | `/api/transactions/submit` | Broadcast and confirm |
+| POST | `/api/v2/transactions/record-submission` | Record a client-broadcast signature |
+| GET | `/api/solana/status` | Configuration + slot |
+| POST | `/api/agents/:id/register-on-chain` | Create AgentRegistry |
+| POST | `/api/agents/:id/status-on-chain` | Toggle on-chain status |
+| POST | `/api/policies/:id/publish-on-chain` | Create/update Policy |
+| POST | `/api/solana/sentinel/initialize` | Initialize SentinelAuthority |
+| POST | `/api/solana/sentinel/rotate` | Rotate Sentinel key |
+
+### Verification performed
+
+- `anchor build`: success (`.so` + IDL).
+- `cargo test -p lilia`: 12 passed, including a byte-identical TypeScript→Rust canonical permit vector.
+- `bun test packages/solana`: 20 passed.
+- `bun run typecheck`, `bun run lint`: clean.
+- Migration applied on a fresh SQLite database and re-run idempotently.
+
+### Not done
+
+- No program deployment, mint creation, or live transfer (deliberate scope).
+- No Devnet execution scripts or acceptance-criteria run.
+- `apps/web` is a separate Next.js workspace and is excluded from the root Biome/TS checks.
+

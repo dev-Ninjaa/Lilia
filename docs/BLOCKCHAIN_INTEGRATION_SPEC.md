@@ -75,7 +75,7 @@ This document specifies the complete integration between the Lilia backend, clie
 │  │     ├─ Introspects Ed25519 instruction                       │ │
 │  │     ├─ Validates permit fields                               │ │
 │  │     ├─ Checks on-chain policy                                │ │
-│  │     ├─ Consumes nonce PDA                                    │ │
+│  │     ├─ Consumes sequence counter                            │ │
 │  │     └─ Allows or rejects transfer                            │ │
 │  │                                                               │ │
 │  └──────────────────────────────────────────────────────────────┘ │
@@ -106,7 +106,7 @@ This document specifies the complete integration between the Lilia backend, clie
 5. Token-2022 processes transfer
    └─> Invokes Lilia Transfer Hook
        ├─> Hook validates permit
-       ├─> Hook consumes nonce
+       ├─> Hook checks + increments the sequence counter
        └─> Transfer succeeds or fails
 
 6. Client confirms transaction
@@ -203,8 +203,8 @@ interface ClientConfig {
 - ✅ Parse and validate permit from message
 - ✅ Check permit expiry (slot-based)
 - ✅ Validate transfer fields against permit
-- ✅ Validate on-chain policy (if present)
-- ✅ Create authorization PDA (consume nonce)
+- ✅ Validate on-chain policy
+- ✅ Enforce and increment the per-agent sequence counter (replay guard)
 - ✅ Emit transfer authorized event
 - ❌ **NOT RESPONSIBLE:** Issuing permits (backend responsibility)
 - ❌ **NOT RESPONSIBLE:** Executing transfers (Token-2022 responsibility)
@@ -214,18 +214,24 @@ interface ClientConfig {
 | Account | Type | Purpose |
 |---------|------|---------|
 | `SentinelAuthority` | PDA | Stores Sentinel public key configuration |
-| `AgentRegistry` | PDA | On-chain agent registry (optional MVP) |
-| `Policy` | PDA | On-chain policy data (optional MVP) |
-| `AuthorizationRecord` | PDA | Nonce consumption tracking |
+| `AgentRegistry` | PDA | Agent identity, liveness, and `next_authorization_sequence` |
+| `Policy` | PDA | On-chain policy data |
 | `ExtraAccountMetaList` | PDA | Transfer Hook extra account metadata |
+
+There is no `AuthorizationRecord` PDA; the sequence counter inside
+`AgentRegistry` is the replay guard.
 
 **Entry Points:**
 
 | Instruction | Purpose |
 |-------------|---------|
-| `initialize` | Initialize Sentinel authority |
+| `initialize_sentinel_authority` | Initialize Sentinel authority |
+| `update_sentinel_authority` | Rotate the Sentinel key |
+| `register_agent` | Create `AgentRegistry` (sequence starts at 0) |
+| `set_agent_status` | Enable/disable an agent |
+| `create_policy` / `update_policy` | Publish a policy revision |
+| `initialize_extra_account_meta_list` | Install the mint's extra accounts |
 | `execute` | Transfer Hook execution (called by Token-2022) |
-| `close_authorization` | Cleanup consumed authorization PDAs |
 
 ---
 
@@ -443,7 +449,7 @@ try {
     
     if (logs.some(log => log.includes('PermitExpired'))) {
       console.error('Permit expired, request new permit');
-    } else if (logs.some(log => log.includes('NonceAlreadyUsed'))) {
+    } else if (logs.some(log => log.includes('InvalidSequence'))) {
       console.error('Permit already consumed (replay attempt)');
     } else if (logs.some(log => log.includes('AmountMismatch'))) {
       console.error('Transfer amount does not match permit');
@@ -526,22 +532,33 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
         ErrorCode::DecimalsMismatch
     );
     
-    // 9. Validate on-chain policy (optional for MVP)
-    if let Some(policy) = &ctx.accounts.policy {
-        require!(policy.is_active, ErrorCode::PolicyInactive);
-        require_eq!(
-            policy.policy_version,
-            permit.policy_version,
-            ErrorCode::PolicyVersionMismatch
-        );
-    }
-    
-    // 10. Consume nonce (authorization PDA created, prevents replay)
-    let auth = &mut ctx.accounts.authorization;
-    auth.nonce = permit.nonce;
-    auth.agent = permit.agent_public_key;
-    auth.consumed_at_slot = clock.slot;
-    auth.bump = ctx.bumps.authorization;
+    // 9. Validate on-chain policy
+    let policy = &ctx.accounts.policy;
+    require!(policy.is_active, ErrorCode::PolicyInactive);
+    require_eq!(
+        policy.policy_version,
+        permit.policy_version,
+        ErrorCode::PolicyVersionMismatch
+    );
+    require!(
+        amount <= policy.max_transfer_amount,
+        ErrorCode::AmountExceedsPolicy
+    );
+    require!(
+        policy.allowed_mint == Pubkey::default() || policy.allowed_mint == permit.mint,
+        ErrorCode::MintNotAllowed
+    );
+
+    // 10. Consume the sequence (replay guard)
+    let registry = &mut ctx.accounts.agent_registry;
+    require!(
+        permit.sequence() == registry.next_authorization_sequence,
+        ErrorCode::InvalidSequence
+    );
+    registry.next_authorization_sequence = registry
+        .next_authorization_sequence
+        .checked_add(1)
+        .ok_or(ErrorCode::SequenceOverflow)?;
     
     // 11. Emit event
     emit!(TransferAuthorized {
@@ -562,46 +579,42 @@ pub fn execute(ctx: Context<TransferHookExecute>, amount: u64) -> Result<()> {
 
 ```rust
 #[derive(Accounts)]
-pub struct TransferHookExecute<'info> {
-    /// CHECK: Token-2022 program validates
-    pub source: UncheckedAccount<'info>,
-    
-    /// CHECK: Validated in execute
-    pub mint: UncheckedAccount<'info>,
-    
-    /// CHECK: Token-2022 program validates
-    pub destination: UncheckedAccount<'info>,
-    
-    /// CHECK: Token-2022 program validates
-    pub authority: UncheckedAccount<'info>,
-    
-    /// CHECK: ExtraAccountMetaList validates
-    pub extra_account_meta_list: UncheckedAccount<'info>,
-    
-    /// Sentinel authority configuration
-    #[account(seeds = [b"sentinel"], bump)]
+pub struct Execute<'info> {
+    #[account(token::mint = mint, token::token_program = TOKEN_2022_PROGRAM_ID)]
+    pub source_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(mint::token_program = TOKEN_2022_PROGRAM_ID)]
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(token::mint = mint, token::token_program = TOKEN_2022_PROGRAM_ID)]
+    pub destination_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// CHECK: Token-2022 already verified this account authorized the transfer.
+    pub owner_delegate: UncheckedAccount<'info>,
+
+    /// CHECK: TLV buffer validated by `ExtraAccountMetaList::check_account_infos`.
+    #[account(seeds = [EXTRA_ACCOUNT_METAS_SEED, mint.key().as_ref()], bump)]
+    pub extra_metas_account: UncheckedAccount<'info>,
+
+    #[account(seeds = [SENTINEL_SEED], bump = sentinel_authority.bump)]
     pub sentinel_authority: Account<'info, SentinelAuthority>,
-    
-    /// Optional on-chain policy
-    #[account(seeds = [b"policy", permit.policy_id.as_bytes()], bump)]
-    pub policy: Option<Account<'info, Policy>>,
-    
-    /// Authorization record (nonce consumption)
+
     #[account(
-        init,
-        payer = authority,
-        space = AuthorizationRecord::LEN,
-        seeds = [b"authorization", permit.nonce.as_ref()],
-        bump
+        mut,
+        seeds = [AGENT_SEED, owner_delegate.key().as_ref()],
+        bump = agent_registry.bump
     )]
-    pub authorization: Account<'info, AuthorizationRecord>,
-    
-    /// Instructions Sysvar for Ed25519 introspection
-    /// CHECK: Address is validated
-    #[account(address = sysvar::instructions::ID)]
+    pub agent_registry: Account<'info, AgentRegistry>,
+
+    #[account(
+        seeds = [POLICY_SEED, owner_delegate.key().as_ref()],
+        bump = policy.bump
+    )]
+    pub policy: Account<'info, Policy>,
+
+    /// CHECK: Instructions sysvar for Ed25519 introspection.
+    #[account(address = solana_sdk_ids::sysvar::instructions::ID)]
     pub instructions_sysvar: UncheckedAccount<'info>,
-    
-    pub system_program: Program<'info, System>,
 }
 ```
 
@@ -830,56 +843,52 @@ pub fn get_extra_account_meta_address(
 
 **One-time setup per mint:**
 
-```rust
-use spl_transfer_hook_interface::instruction::initialize_extra_account_meta_list;
+The program builds the canonical list itself and ignores caller-supplied metas,
+so a mint authority cannot redirect the hook.
 
-pub fn initialize_hook_accounts(
-    ctx: Context<InitializeExtraAccountMetas>
-) -> Result<()> {
-    let extra_account_metas = vec![
-        // Sentinel authority (PDA, not writable)
+```rust
+use spl_tlv_account_resolution::{account::ExtraAccountMeta, seeds::Seed};
+
+pub fn canonical_extra_account_metas() -> Result<Vec<ExtraAccountMeta>> {
+    Ok(vec![
+        // SentinelAuthority PDA, read-only
         ExtraAccountMeta::new_with_seeds(
-            &[Seed::Literal { bytes: b"sentinel".to_vec() }],
-            false,  // is_signer
-            false,  // is_writable
+            &[Seed::Literal { bytes: SENTINEL_SEED.to_vec() }],
+            false,
+            false,
         )?,
-        
-        // Authorization record (PDA, writable for init)
+        // AgentRegistry PDA, writable for the sequence increment
         ExtraAccountMeta::new_with_seeds(
             &[
-                Seed::Literal { bytes: b"authorization".to_vec() },
-                Seed::InstructionData {
-                    index: 276,  // Nonce offset in permit message
-                    length: 32,  // Nonce length
-                },
+                Seed::Literal { bytes: AGENT_SEED.to_vec() },
+                Seed::AccountKey { index: 3 }, // transfer authority
             ],
-            false,  // is_signer
-            true,   // is_writable
+            false,
+            true,
         )?,
-        
-        // Instructions Sysvar
-        ExtraAccountMeta::new_with_pubkey(
-            &sysvar::instructions::ID,
-            false,  // is_signer
-            false,  // is_writable
-        )?,
-        
-        // System program (for PDA init)
-        ExtraAccountMeta::new_with_pubkey(
-            &system_program::ID,
+        // Policy PDA, read-only
+        ExtraAccountMeta::new_with_seeds(
+            &[
+                Seed::Literal { bytes: POLICY_SEED.to_vec() },
+                Seed::AccountKey { index: 3 },
+            ],
             false,
             false,
         )?,
-    ];
-    
-    // Write to ExtraAccountMetaList account
-    let account_size = ExtraAccountMetaList::size_of(extra_account_metas.len())?;
-    let mut data = ctx.accounts.extra_account_meta_list.try_borrow_mut_data()?;
-    ExtraAccountMetaList::init::<ExecuteInstruction>(&mut data, &extra_account_metas)?;
-    
-    Ok(())
+        // Instructions sysvar
+        ExtraAccountMeta::new_with_pubkey(
+            &solana_sdk_ids::sysvar::instructions::ID,
+            false,
+            false,
+        )?,
+    ])
 }
 ```
+
+The list is written with
+`ExtraAccountMetaList::size_of(4)` and `ExtraAccountMetaList::init::<ExecuteInstruction>`.
+Account index `3` in the hook instruction is the source owner/delegate (the
+transfer authority), which is why both dynamic PDAs use `Seed::AccountKey`.
 
 ### Client Resolution
 
@@ -905,7 +914,7 @@ const extraAccounts = await resolveExtraAccountMeta(
 | Error | Cause | Resolution |
 |-------|-------|------------|
 | `PermitExpired` | Current slot > expires_at_slot | Request new permit |
-| `NonceAlreadyUsed` | Authorization PDA exists | Request new permit (replay attempt) |
+| `InvalidSequence` | Permit sequence is not the current on-chain sequence | Request a new permit |
 | `AmountMismatch` | Transfer amount ≠ permit amount | Check amount conversion |
 | `SourceMismatch` | Wrong source token account | Verify account addresses |
 | `InvalidVerificationProgram` | Ed25519 ix program ID wrong | Check instruction construction |
@@ -945,7 +954,7 @@ async function submitWithRetry(
       // Don't retry on permit errors (need new permit)
       if (error.logs?.some(log => 
         log.includes('PermitExpired') ||
-        log.includes('NonceAlreadyUsed') ||
+        log.includes('InvalidSequence') ||
         log.includes('AmountMismatch')
       )) {
         throw error;  // Fatal, don't retry
@@ -1011,12 +1020,13 @@ async function pollForConfirmation(
 
 ### 1. Signature Replay Prevention
 
-✅ **Mitigation: Nonce-based PDA consumption**
+✅ **Mitigation: Per-agent sequence counter**
 
-- Each permit has unique 32-byte nonce
-- Authorization PDA derived from nonce
-- PDA initialization atomically consumes nonce
-- Replay attempt fails on `AccountAlreadyInitialized`
+- Each permit carries the sequence it was issued for
+- The hook requires an exact match with `AgentRegistry.next_authorization_sequence`
+- The counter is incremented in the same transaction as the transfer
+- A replay or pre-minted permit fails with `InvalidSequence`
+- No per-transfer PDA is created, so there is no rent or cleanup
 
 ### 2. Instruction Injection Attacks
 
