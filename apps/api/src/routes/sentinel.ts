@@ -20,6 +20,7 @@ const routes: FastifyPluginAsync = async (app) => {
     const result = await service.evaluate(request.ownerId, body, body.policyId);
     return sendSuccess(reply, request, result, 201);
   });
+  
   app.post("/api/sentinel/authorize", async (request, reply) => {
     const { assessmentId } = parseInput(authorizeSchema, request.body);
     return sendSuccess(
@@ -29,16 +30,20 @@ const routes: FastifyPluginAsync = async (app) => {
       201,
     );
   });
+
   app.post("/api/v2/sentinel/authorize", async (request, reply) => {
     const body = parseInput(authorizeV2Schema, request.body);
     return sendSuccess(reply, request, await permitsV2.issue(request.ownerId, body), 201);
   });
+
   app.get("/api/sentinel/rules", async (request, reply) =>
     sendSuccess(reply, request, SECURITY_RULES),
   );
+
   app.get("/api/sentinel/assessments/:assessmentId", async (request, reply) => {
     const { assessmentId } = parseInput(assessmentParams, request.params);
     return sendSuccess(reply, request, await service.getOwned(request.ownerId, assessmentId));
   });
 };
+
 export default routes;
