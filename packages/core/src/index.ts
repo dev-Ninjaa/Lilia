@@ -1,6 +1,7 @@
 export * from "./agent/agent.service.ts";
 export * from "./authorization/authorization.service.ts";
 export * from "./authorization/permit.service.ts";
+export * from "./authorization/permit-v2.service.ts";
 export * from "./authorization/signing.service.ts";
 export * from "./events/event.service.ts";
 export * from "./policy/policy.service.ts";
@@ -9,4 +10,8 @@ export * from "./security/security.service.ts";
 export * from "./sentinel/evaluation.service.ts";
 export * from "./sentinel/rules.engine.ts";
 export * from "./simulation/simulation.service.ts";
+export * from "./solana/admin.service.ts";
+export * from "./solana/onchain.service.ts";
+export * from "./solana/solana-client.ts";
 export * from "./transactions/transaction.service.ts";
+export * from "./transactions/transaction-v2.service.ts";
