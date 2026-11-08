@@ -204,7 +204,8 @@ export class PermitV2Service {
       });
       await tx
         .update(agents)
-        .set({ authorizationSequence: (sequence + 1n).toString(), updatedAt: createdAt })
+        // Mirror the on-chain counter; it only advances when a transfer lands.
+        .set({ authorizationSequence: sequence.toString(), updatedAt: createdAt })
         .where(eq(agents.id, agent.id));
       await tx.insert(securityEvents).values(
         eventRecord({

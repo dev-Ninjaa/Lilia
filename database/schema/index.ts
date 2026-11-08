@@ -128,7 +128,9 @@ export const permits = sqliteTable(
     index("permits_assessment_idx").on(table.assessmentId),
     index("permits_agent_idx").on(table.agentId),
     uniqueIndex("permits_hash_idx").on(table.permitHash),
-    uniqueIndex("permits_agent_sequence_idx").on(table.agentId, table.sequence),
+    // Not unique: a permit only advances the on-chain sequence when its
+    // transfer lands, so an unconsumed sequence must be reissuable.
+    index("permits_agent_sequence_idx").on(table.agentId, table.sequence),
     index("permits_transfer_authority_idx").on(table.transferAuthority),
     index("permits_version_idx").on(table.permitVersion),
   ],
