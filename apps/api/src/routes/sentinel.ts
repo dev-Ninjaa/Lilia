@@ -20,7 +20,7 @@ const routes: FastifyPluginAsync = async (app) => {
     const result = await service.evaluate(request.ownerId, body, body.policyId);
     return sendSuccess(reply, request, result, 201);
   });
-  
+
   app.post("/api/sentinel/authorize", async (request, reply) => {
     const { assessmentId } = parseInput(authorizeSchema, request.body);
     return sendSuccess(

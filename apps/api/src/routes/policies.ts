@@ -50,7 +50,7 @@ const routes: FastifyPluginAsync = async (app) => {
     );
     return sendSuccess(reply, request, policy);
   });
-  
+
   app.delete("/api/policies/:policyId", async (request, reply) => {
     const { policyId } = parseInput(policyIdParams, request.params);
     const policy = await service.deactivate(request.ownerId, policyId);
