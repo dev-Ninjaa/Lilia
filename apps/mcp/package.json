@@ -1,18 +1,47 @@
 {
-  "name": "@lilia/mcp",
+  "name": "lilia-mcp",
   "version": "0.1.0",
-  "private": false,
-  "type": "module",
   "description": "MCP server exposing Lilia Sentinel tools (evaluate, authorize, prepare, simulate, lookup) over the Lilia REST API.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "@lilia/mcp": "./src/index.ts"
+    "lilia-mcp": "./dist/index.js",
+    "lilia-mcp-setup": "./dist/setup.js"
   },
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
-    "start": "bun run src/index.ts",
-    "build": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "setup": "node dist/setup.js",
+    "dev": "bun run src/index.ts",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check src",
+    "prepublishOnly": "npm run build",
+    "postinstall": "echo '\n✨ Run \"npx lilia-mcp-setup\" to configure your API key\n'"
   },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "lilia",
+    "sentinel",
+    "solana",
+    "token-2022",
+    "authorization",
+    "policy-engine",
+    "ai-tools"
+  ],
+  "author": "Lilia Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-Ninjaa/Lilia.git",
+    "directory": "apps/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/dev-Ninjaa/Lilia/issues"
+  },
+  "homepage": "https://github.com/dev-Ninjaa/Lilia/tree/main/apps/mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^3.24.2"
@@ -22,7 +51,6 @@
     "typescript": "^5"
   },
   "engines": {
-    "bun": ">=1.4.4",
     "node": ">=18"
   }
 }

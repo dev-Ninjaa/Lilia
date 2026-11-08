@@ -1,4 +1,4 @@
-import { request } from "@lilia/mcp/client.ts";
+import { request } from "./client.js";
 
 export function evaluateTransaction(input: {
   agentId: string;

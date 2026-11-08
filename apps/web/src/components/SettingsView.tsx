@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function SettingsView() {
   const [showKey, setShowKey] = useState(false);
@@ -11,14 +11,14 @@ export function SettingsView() {
   useEffect(() => {
     // Get API key from server
     fetch("/api/lilia/api-key")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success) {
           setApiKey(data.data.apiKey);
           setApiUrl(data.data.apiUrl);
         }
       })
-      .catch(err => console.error("Failed to fetch API key:", err));
+      .catch((err) => console.error("Failed to fetch API key:", err));
   }, []);
 
   const copyToClipboard = async () => {
@@ -35,9 +35,7 @@ export function SettingsView() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-100">Settings</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Manage your API access and integrations
-        </p>
+        <p className="mt-2 text-sm text-gray-400">Manage your API access and integrations</p>
       </div>
 
       {/* API Key Section */}
@@ -54,12 +52,13 @@ export function SettingsView() {
         <div className="mt-6 space-y-4">
           {/* API Key Display */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-2">
+            <label htmlFor="api-key" className="block text-xs font-medium text-gray-400 mb-2">
               Your API Key
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
                 <input
+                  id="api-key"
                   type={showKey ? "text" : "password"}
                   value={apiKey}
                   readOnly
@@ -67,12 +66,14 @@ export function SettingsView() {
                 />
               </div>
               <button
+                type="button"
                 onClick={() => setShowKey(!showKey)}
                 className="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-gray-100 transition-colors"
               >
                 {showKey ? "Hide" : "Show"}
               </button>
               <button
+                type="button"
                 onClick={copyToClipboard}
                 className="rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-cyan-700 transition-colors"
               >
@@ -85,6 +86,7 @@ export function SettingsView() {
           <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4">
             <div className="flex items-start gap-3">
               <svg
+                aria-hidden="true"
                 className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -100,7 +102,8 @@ export function SettingsView() {
               <div className="text-sm text-yellow-200">
                 <p className="font-medium">Keep this key secure!</p>
                 <p className="mt-1 text-yellow-200/80">
-                  This key grants full access to your Lilia API. Never share it publicly or commit it to version control.
+                  This key grants full access to your Lilia API. Never share it publicly or commit
+                  it to version control.
                 </p>
               </div>
             </div>
@@ -111,9 +114,7 @@ export function SettingsView() {
       {/* MCP Setup Instructions */}
       <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
         <h2 className="text-lg font-semibold text-gray-100">Setup MCP Integration</h2>
-        <p className="mt-1 text-sm text-gray-400">
-          Connect Lilia to your AI assistant in 2 steps
-        </p>
+        <p className="mt-1 text-sm text-gray-400">Connect Lilia to your AI assistant in 2 steps</p>
 
         <div className="mt-6 space-y-4">
           <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
@@ -123,9 +124,7 @@ export function SettingsView() {
               </div>
               <div className="flex-1">
                 <h3 className="font-medium text-gray-100">Install lilia-mcp</h3>
-                <p className="mt-1 text-sm text-gray-400">
-                  Run this command in your terminal:
-                </p>
+                <p className="mt-1 text-sm text-gray-400">Run this command in your terminal:</p>
                 <div className="mt-2 rounded-lg bg-black p-3">
                   <code className="text-sm text-cyan-400">npm install -g lilia-mcp</code>
                 </div>
@@ -140,9 +139,7 @@ export function SettingsView() {
               </div>
               <div className="flex-1">
                 <h3 className="font-medium text-gray-100">Run setup</h3>
-                <p className="mt-1 text-sm text-gray-400">
-                  Configure your API key:
-                </p>
+                <p className="mt-1 text-sm text-gray-400">Configure your API key:</p>
                 <div className="mt-2 rounded-lg bg-black p-3">
                   <code className="text-sm text-cyan-400">npx lilia-mcp-setup</code>
                 </div>
@@ -179,9 +176,7 @@ export function SettingsView() {
         <div className="mt-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">API URL:</span>
-            <code className="text-cyan-400">
-              {apiUrl || "Loading..."}
-            </code>
+            <code className="text-cyan-400">{apiUrl || "Loading..."}</code>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Network:</span>
@@ -190,7 +185,7 @@ export function SettingsView() {
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Documentation:</span>
             <a
-              href="https://github.com/yourusername/lilia"
+              href="https://github.com/dev-Ninjaa/Lilia"
               target="_blank"
               rel="noopener noreferrer"
               className="text-cyan-400 hover:text-cyan-300"
