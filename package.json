@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "packageManager": "bun@1.4.4",
-  "workspaces": ["apps/*", "packages/*", "database"],
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "database"
+  ],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -30,5 +34,9 @@
     "@types/node": "^22.13.4",
     "turbo": "^2.9.10",
     "typescript": "^5.7.3"
+  },
+  "bin": {
+    "lilia-mcp": "dist/index.js",
+    "lilia-mcp-setup": "dist/setup.js"
   }
 }
