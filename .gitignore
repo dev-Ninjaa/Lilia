@@ -15,3 +15,21 @@ turbo
 apps/*/bun.lock
 packages/*/bun.lock
 .vercel
+
+# Documentation (internal development docs)
+docs/AUDIT_REPORT.md
+docs/BLOCKCHAIN_INTEGRATION_SPEC.md
+docs/DEMO_SCRIPT.md
+docs/DEPLOYMENT.md
+docs/DEVNET_DEPLOYMENT.md
+docs/ENVIRONMENT.md
+docs/FRONTEND_INTEGRATION_PLAN.md
+docs/ONCHAIN_ACCOUNT_SPEC.md
+docs/PERMIT_SPECIFICATION.md
+docs/PERMIT_V2_BINARY_FORMAT.md
+docs/PHASE_2_COMPLETION_REPORT.md
+docs/PHASE_2_INITIAL_FINDINGS.md
+docs/PHASE_3_ACCEPTANCE_REPORT.md
+docs/PHASE_3_IMPLEMENTATION_PLAN.md
+docs/SECURITY_AUDIT.md
+docs/TRANSFER_HOOK_SECURITY_MODEL.md
