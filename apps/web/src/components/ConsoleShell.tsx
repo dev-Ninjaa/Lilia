@@ -1,5 +1,6 @@
 "use client";
 
+import { AuroraBackground } from "@/components/AuroraBackground";
 import { type AppTabId, Sidebar } from "@/components/Sidebar";
 import { solanaStatus } from "@/lib/api";
 import { Menu } from "lucide-react";
@@ -52,42 +53,49 @@ export const ConsoleShell: React.FC<ConsoleShellProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07080a] text-white selection:bg-[#ff6b4a] selection:text-black">
-      <Sidebar
-        open={sidebarOpen}
-        activeTab={activeTab}
-        onNavigate={handleNavigate}
-        onClose={() => setSidebarOpen(false)}
-        onBackToLanding={() => router.push("/")}
-        apiConnected={apiConnected}
-      />
+    <div className="relative min-h-screen bg-[#07080a] text-white selection:bg-[#ff6b4a] selection:text-black">
+      {/* Subtle Aurora Ambient Variant for Console */}
+      <AuroraBackground isFixed={true} className="opacity-35" />
 
-      {/* Mobile header (desktop uses fixed sidebar) */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/[0.07] bg-[#0b0c10]/95 px-4 py-3 backdrop-blur lg:hidden">
-        <button
-          type="button"
-          aria-label="Open navigation"
-          aria-expanded={sidebarOpen}
-          onClick={() => setSidebarOpen(true)}
-          className="rounded-lg p-2 text-neutral-300 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[#FF5533]"
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </button>
-        <span className="font-bold tracking-wider text-sm">LILIA</span>
-        <span
-          className={`flex items-center gap-1.5 font-mono text-[11px] ${apiConnected ? "text-[#14F195]" : "text-neutral-500"}`}
-        >
+      <div className="relative z-10">
+        <Sidebar
+          open={sidebarOpen}
+          activeTab={activeTab}
+          onNavigate={handleNavigate}
+          onClose={() => setSidebarOpen(false)}
+          onBackToLanding={() => router.push("/")}
+          apiConnected={apiConnected}
+        />
+
+        {/* Mobile header (desktop uses fixed sidebar) */}
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/[0.07] bg-[#0b0c10]/95 px-4 py-3 backdrop-blur lg:hidden">
+          <button
+            type="button"
+            aria-label="Open navigation"
+            aria-expanded={sidebarOpen}
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-lg p-2 text-neutral-300 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-[#FF5533]"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <span className="font-bold tracking-wider text-sm">LILIA</span>
           <span
-            className={`h-1.5 w-1.5 rounded-full ${apiConnected ? "bg-[#14F195]" : "bg-neutral-600"}`}
-            aria-hidden="true"
-          />
-          API
-        </span>
-      </header>
+            className={`flex items-center gap-1.5 font-mono text-[11px] ${apiConnected ? "text-[#14F195]" : "text-neutral-500"}`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${apiConnected ? "bg-[#14F195]" : "bg-neutral-600"}`}
+              aria-hidden="true"
+            />
+            API
+          </span>
+        </header>
 
-      <main className="lg:pl-64">
-        <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-7 lg:px-8">{children}</div>
-      </main>
+        <main className="lg:pl-64">
+          <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-7 lg:px-8">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

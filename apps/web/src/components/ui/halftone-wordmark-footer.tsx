@@ -230,7 +230,6 @@ export default function HalftoneWordmarkFooter({
     fontWeight,
     wordmark,
   };
-  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are a joined key by design
   const key = [
     wordmark,
     dotGap,
