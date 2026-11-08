@@ -16,9 +16,6 @@ import { ArrowRight, CheckCircle2, RefreshCw, Terminal, XCircle } from "lucide-r
 import type React from "react";
 import { useMemo, useState } from "react";
 
-// Devnet demo mint created by scripts/devnet/setup.ts (see docs/DEVNET_DEPLOYMENT.md).
-const DEMO_MINT = "3oJ5wNXd8rLddjFV6gNKkEjoRoDBKar1bVEhSwAeoWzZ";
-
 interface TransferConsoleProps {
   agents: Agent[];
   policies: Policy[];
@@ -75,8 +72,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
     mint ||
     (selectedPolicy && !selectedPolicy.supportedMint.includes(" ")
       ? selectedPolicy.supportedMint
-      : "") ||
-    DEMO_MINT;
+      : "");
 
   const reset = () => {
     setEvaluation(null);
