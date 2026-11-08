@@ -1,0 +1,19 @@
+{
+  "name": "@lilia/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared SQLite schema (Drizzle) and migration files.",
+  "exports": {
+    ".": "./schema/index.ts"
+  },
+  "main": "./schema/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.4"
+  }
+}

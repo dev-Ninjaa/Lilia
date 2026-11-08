@@ -1,0 +1,26 @@
+{
+  "name": "@lilia/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fastify REST API for Lilia (single-owner, bearer auth).",
+  "exports": {
+    ".": "./src/server.ts"
+  },
+  "main": "./src/server.ts",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@lilia/core": "workspace:*",
+    "@lilia/schemas": "workspace:*",
+    "drizzle-orm": "^0.38.4",
+    "fastify": "^5.2.1",
+    "fastify-plugin": "^5.0.1",
+    "zod": "^3.24.2"
+  }
+}
