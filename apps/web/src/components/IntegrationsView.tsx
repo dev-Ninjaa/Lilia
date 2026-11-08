@@ -210,7 +210,7 @@ export const IntegrationsView: React.FC = () => {
               Claude Desktop & Cursor MCP Configuration
             </h3>
             <p className="text-xs text-neutral-400">
-              Paste this configuration into your Claude Desktop or Cursor MCP settings. The MCP server is not implemented yet — the backend reports `not_implemented`.
+              Paste this configuration into your Claude Desktop or Cursor MCP settings. Runs locally over stdio and proxies the Lilia REST API with your bearer key.
             </p>
           </div>
 
@@ -232,14 +232,14 @@ export const IntegrationsView: React.FC = () => {
         </pre>
       </div>
 
-      {/* MCP Tools Table (documented target, not implemented) */}
+      {/* MCP Tools Table */}
       <div className="rounded-2xl bg-[#111317] border border-white/[0.08] overflow-hidden">
         <div className="p-4 border-b border-white/[0.08] bg-black/40 flex items-center justify-between">
           <h3 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
             <Code2 className="w-4 h-4 text-[#FF5533]" />
-            Planned MCP Tool Capabilities
+            MCP Tool Capabilities (Official TypeScript SDK)
           </h3>
-          <span className="text-xs font-mono text-neutral-500">Not implemented</span>
+          <span className="text-xs font-mono text-neutral-500">{mcpTools.length} tools live</span>
         </div>
 
         <div className="overflow-x-auto">

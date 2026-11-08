@@ -97,7 +97,7 @@ export type SolanaStatus = {
 export type IntegrationsStatus = {
   solanaRpc: { status: string; endpointConfigured: boolean; note: string };
   gemini: { status: string };
-  mcp: { status: string };
+  mcp: { status: string; server?: string; tools?: string[] };
   database: { status: string };
 };
 

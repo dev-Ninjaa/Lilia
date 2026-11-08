@@ -14,7 +14,8 @@
     "db:generate-key": "bun scripts/generate-signing-key.ts",
     "devnet:setup": "bun scripts/devnet/setup.ts",
     "devnet:verify": "bun scripts/devnet/verify.ts",
-    "devnet:cleanup": "bun scripts/devnet/cleanup.ts"
+    "devnet:cleanup": "bun scripts/devnet/cleanup.ts",
+    "mcp": "bun apps/mcp-server/src/index.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "^1.2.2",

@@ -3,6 +3,16 @@ import { APP_VERSION } from "../config/constants.ts";
 import { env } from "../config/env.ts";
 import { sendSuccess } from "../middleware/error-handler.ts";
 
+const MCP_TOOLS = [
+  "evaluate_transaction",
+  "request_authorization",
+  "prepare_transfer",
+  "simulate_transfer",
+  "get_transaction_status",
+  "get_agent",
+  "get_policy",
+];
+
 const routes: FastifyPluginAsync = async (app) => {
   app.get("/api/integrations", async (request, reply) =>
     sendSuccess(reply, request, {
@@ -12,7 +22,7 @@ const routes: FastifyPluginAsync = async (app) => {
         note: "Permit v2 and transfer submission are available when configured.",
       },
       gemini: { status: env.GEMINI_API_KEY ? "configured_but_unused" : "not_configured" },
-      mcp: { status: "not_implemented" },
+      mcp: { status: "available", server: "@lilia/mcp-server", tools: MCP_TOOLS },
       database: { status: "connected" },
     }),
   );
@@ -26,7 +36,12 @@ const routes: FastifyPluginAsync = async (app) => {
     }),
   );
   app.get("/api/integrations/mcp/status", async (request, reply) =>
-    sendSuccess(reply, request, { status: "not_implemented" }),
+    sendSuccess(reply, request, {
+      status: "available",
+      server: "@lilia/mcp-server",
+      transport: "stdio",
+      tools: MCP_TOOLS,
+    }),
   );
   app.get("/api/health", async (request, reply) => {
     let database = "connected";
