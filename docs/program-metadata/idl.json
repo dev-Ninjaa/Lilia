@@ -1,0 +1,1434 @@
+{
+  "address": "51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz",
+  "metadata": {
+    "name": "lilia",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Lilia Token-2022 transfer hook enforcing signed authorization permits"
+  },
+  "instructions": [
+    {
+      "name": "create_policy",
+      "discriminator": [
+        27,
+        81,
+        33,
+        27,
+        196,
+        103,
+        246,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "policy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  108,
+                  105,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "transfer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "agent_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "transfer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transfer_authority"
+        },
+        {
+          "name": "sentinel_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "sentinel_authority"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "policy_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "max_transfer_amount",
+          "type": "u64"
+        },
+        {
+          "name": "allowed_mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "expires_at_slot",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "execute",
+      "discriminator": [
+        105,
+        37,
+        101,
+        197,
+        75,
+        251,
+        102,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "source_account"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "destination_account"
+        },
+        {
+          "name": "owner_delegate",
+          "docs": [
+            "account authorized the transfer; the handler additionally binds it to",
+            "the permit and to the source token account."
+          ]
+        },
+        {
+          "name": "extra_metas_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sentinel_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "agent_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner_delegate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "policy",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  108,
+                  105,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner_delegate"
+              }
+            ]
+          }
+        },
+        {
+          "name": "instructions_sysvar",
+          "docs": [
+            "precompile instruction."
+          ],
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_extra_account_meta_list",
+      "discriminator": [
+        43,
+        34,
+        13,
+        49,
+        167,
+        88,
+        235,
+        235
+      ],
+      "accounts": [
+        {
+          "name": "extra_metas_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "mint_authority",
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "metas",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "AnchorExtraAccountMeta"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize_sentinel_authority",
+      "discriminator": [
+        50,
+        161,
+        213,
+        174,
+        78,
+        20,
+        69,
+        36
+      ],
+      "accounts": [
+        {
+          "name": "sentinel_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "docs": [
+            "Authority allowed to rotate the Sentinel key and administer agents."
+          ],
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "public_key",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "register_agent",
+      "discriminator": [
+        135,
+        157,
+        66,
+        195,
+        2,
+        113,
+        175,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "agent_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "transfer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transfer_authority",
+          "docs": [
+            "Wallet that will sign transfers for this agent. Its key is the PDA seed."
+          ]
+        },
+        {
+          "name": "sentinel_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "sentinel_authority"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "agent_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "agent_identity_key",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_agent_status",
+      "discriminator": [
+        31,
+        193,
+        64,
+        189,
+        114,
+        155,
+        164,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "agent_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "transfer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transfer_authority"
+        },
+        {
+          "name": "sentinel_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "signer": true,
+          "relations": [
+            "sentinel_authority"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "is_active",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_policy",
+      "discriminator": [
+        212,
+        245,
+        246,
+        7,
+        163,
+        151,
+        18,
+        57
+      ],
+      "accounts": [
+        {
+          "name": "policy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  108,
+                  105,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "transfer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "agent_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "transfer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transfer_authority"
+        },
+        {
+          "name": "sentinel_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "signer": true,
+          "relations": [
+            "sentinel_authority"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "max_transfer_amount",
+          "type": "u64"
+        },
+        {
+          "name": "allowed_mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "expires_at_slot",
+          "type": "u64"
+        },
+        {
+          "name": "is_active",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_sentinel_public_key",
+      "discriminator": [
+        246,
+        150,
+        77,
+        203,
+        223,
+        171,
+        165,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "sentinel_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  110,
+                  116,
+                  105,
+                  110,
+                  101,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "upgrade_authority",
+          "signer": true,
+          "relations": [
+            "sentinel_authority"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_public_key",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AgentRegistry",
+      "discriminator": [
+        6,
+        34,
+        128,
+        124,
+        33,
+        136,
+        199,
+        171
+      ]
+    },
+    {
+      "name": "Policy",
+      "discriminator": [
+        222,
+        135,
+        7,
+        163,
+        235,
+        177,
+        33,
+        68
+      ]
+    },
+    {
+      "name": "SentinelAuthority",
+      "discriminator": [
+        232,
+        18,
+        142,
+        152,
+        231,
+        94,
+        130,
+        105
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AgentRegistered",
+      "discriminator": [
+        191,
+        78,
+        217,
+        54,
+        232,
+        100,
+        189,
+        85
+      ]
+    },
+    {
+      "name": "AgentStatusChanged",
+      "discriminator": [
+        210,
+        74,
+        73,
+        158,
+        205,
+        28,
+        137,
+        178
+      ]
+    },
+    {
+      "name": "ExtraAccountMetaListInitialized",
+      "discriminator": [
+        111,
+        68,
+        225,
+        225,
+        90,
+        164,
+        193,
+        206
+      ]
+    },
+    {
+      "name": "PolicyCreated",
+      "discriminator": [
+        59,
+        189,
+        65,
+        121,
+        86,
+        157,
+        108,
+        10
+      ]
+    },
+    {
+      "name": "PolicyUpdated",
+      "discriminator": [
+        225,
+        112,
+        112,
+        67,
+        95,
+        236,
+        245,
+        161
+      ]
+    },
+    {
+      "name": "SentinelAuthorityInitialized",
+      "discriminator": [
+        7,
+        177,
+        181,
+        36,
+        160,
+        200,
+        105,
+        185
+      ]
+    },
+    {
+      "name": "SentinelKeyUpdated",
+      "discriminator": [
+        16,
+        191,
+        181,
+        11,
+        140,
+        72,
+        202,
+        197
+      ]
+    },
+    {
+      "name": "TransferAuthorized",
+      "discriminator": [
+        51,
+        107,
+        72,
+        144,
+        187,
+        182,
+        229,
+        125
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidDomain",
+      "msg": "Permit domain is invalid"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidVersion",
+      "msg": "Permit version is not supported"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidPermitLength",
+      "msg": "Permit message must be exactly 308 bytes"
+    },
+    {
+      "code": 6003,
+      "name": "PermitExpired",
+      "msg": "Permit has expired"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidAmount",
+      "msg": "Permit amount must be greater than zero"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidMintDecimals",
+      "msg": "Mint decimals must be 0-18"
+    },
+    {
+      "code": 6006,
+      "name": "TransferAuthorityMismatch",
+      "msg": "Transfer authority does not match the permit"
+    },
+    {
+      "code": 6007,
+      "name": "SourceMismatch",
+      "msg": "Source token account does not match the permit"
+    },
+    {
+      "code": 6008,
+      "name": "DestinationMismatch",
+      "msg": "Destination token account does not match the permit"
+    },
+    {
+      "code": 6009,
+      "name": "MintMismatch",
+      "msg": "Mint does not match the permit"
+    },
+    {
+      "code": 6010,
+      "name": "AmountMismatch",
+      "msg": "Amount does not match the permit"
+    },
+    {
+      "code": 6011,
+      "name": "AgentRegistryMismatch",
+      "msg": "Agent registry does not match the permit"
+    },
+    {
+      "code": 6012,
+      "name": "AgentIdentityMismatch",
+      "msg": "Agent identity does not match the registry"
+    },
+    {
+      "code": 6013,
+      "name": "AgentDisabled",
+      "msg": "Agent is disabled"
+    },
+    {
+      "code": 6014,
+      "name": "PolicyMismatch",
+      "msg": "Policy does not match the permit"
+    },
+    {
+      "code": 6015,
+      "name": "PolicyInactive",
+      "msg": "Policy is inactive or expired"
+    },
+    {
+      "code": 6016,
+      "name": "PolicyVersionMismatch",
+      "msg": "Policy version does not match the permit"
+    },
+    {
+      "code": 6017,
+      "name": "AmountExceedsPolicy",
+      "msg": "Amount exceeds the on-chain policy limit"
+    },
+    {
+      "code": 6018,
+      "name": "MintNotAllowed",
+      "msg": "Mint is not allowed by the policy"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidSequence",
+      "msg": "Authorization sequence is invalid or already consumed"
+    },
+    {
+      "code": 6020,
+      "name": "SequenceOverflow",
+      "msg": "Authorization sequence overflow"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidEd25519Instruction",
+      "msg": "Ed25519 instruction is missing or malformed"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidEd25519Position",
+      "msg": "Ed25519 instruction must be immediately before the transfer"
+    },
+    {
+      "code": 6023,
+      "name": "UnauthorizedSigner",
+      "msg": "Signer is not the configured Sentinel authority"
+    },
+    {
+      "code": 6024,
+      "name": "NotTransferring",
+      "msg": "Transfer hook was called outside a Token-2022 transfer"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidExtraAccountMetaList",
+      "msg": "Extra account meta list is invalid"
+    }
+  ],
+  "types": [
+    {
+      "name": "AgentRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "agent_id",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "agent_identity_key",
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentRegistry",
+      "docs": [
+        "Per-transfer-authority agent state.",
+        "",
+        "PDA seeds: `[b\"agent\", transfer_authority]`",
+        "",
+        "The sequence counter is the on-chain replay guard. Every permit carries the",
+        "sequence it was issued for; a successful transfer increments the counter so",
+        "the same permit can never be used twice."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "agent_id",
+            "docs": [
+              "16-byte backend identifier (first 16 bytes of the agent UUID)."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "agent_identity_key",
+            "docs": [
+              "Backend agent identity key bound into the permit."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_authority",
+            "docs": [
+              "Wallet allowed to sign transfers for this agent."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "docs": [
+              "Backend owner that registered the agent."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "is_active",
+            "docs": [
+              "Whether the agent may currently transfer."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "next_authorization_sequence",
+            "docs": [
+              "Next sequence value a permit must carry."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "registered_slot",
+            "docs": [
+              "Slot at which the agent was registered."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump."
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentStatusChanged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "transfer_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AnchorExtraAccountMeta",
+      "docs": [
+        "Anchor-friendly mirror of the SPL `ExtraAccountMeta` pod layout.",
+        "",
+        "The SPL initialize instruction sends a length-prefixed list of these",
+        "structs. The program ignores the supplied list and installs its canonical",
+        "list, but the type is still required to deserialize the instruction."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "discriminator",
+            "type": "u8"
+          },
+          {
+            "name": "address_config",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "is_signer",
+            "type": "bool"
+          },
+          {
+            "name": "is_writable",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ExtraAccountMetaListInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "count",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Policy",
+      "docs": [
+        "Active on-chain policy for one transfer authority.",
+        "",
+        "PDA seeds: `[b\"policy\", transfer_authority]`",
+        "",
+        "The backend may keep policy history off-chain; on-chain there is exactly one",
+        "active policy per agent, replaced in place with an incremented version."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "policy_id",
+            "docs": [
+              "16-byte backend identifier (first 16 bytes of the policy UUID)."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "agent_registry",
+            "docs": [
+              "Agent registry this policy belongs to."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "docs": [
+              "Backend owner that published the policy."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "max_transfer_amount",
+            "docs": [
+              "Maximum amount in base units."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "allowed_mint",
+            "docs": [
+              "Allowed mint, or the all-zero pubkey for \"any mint\"."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "is_active",
+            "docs": [
+              "Whether the policy is active."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "policy_version",
+            "docs": [
+              "Monotonic policy version bound into permits."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "expires_at_slot",
+            "docs": [
+              "Policy expiry slot, or 0 for no expiry."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump."
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PolicyCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "transfer_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "policy_id",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "max_transfer_amount",
+            "type": "u64"
+          },
+          {
+            "name": "allowed_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "expires_at_slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PolicyUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "transfer_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "policy_version",
+            "type": "u32"
+          },
+          {
+            "name": "max_transfer_amount",
+            "type": "u64"
+          },
+          {
+            "name": "allowed_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "expires_at_slot",
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SentinelAuthority",
+      "docs": [
+        "Global Sentinel signing configuration.",
+        "",
+        "PDA seeds: `[b\"sentinel\"]`"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "public_key",
+            "docs": [
+              "Ed25519 public key of the backend that signs permits."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "upgrade_authority",
+            "docs": [
+              "Authority allowed to update the Sentinel key and administer agents."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump."
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SentinelAuthorityInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "public_key",
+            "type": "pubkey"
+          },
+          {
+            "name": "upgrade_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SentinelKeyUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_key",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_key",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransferAuthorized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "transfer_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "source",
+            "type": "pubkey"
+          },
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "sequence",
+            "type": "u64"
+          },
+          {
+            "name": "policy_version",
+            "type": "u32"
+          }
+        ]
+      }
+    }
+  ]
+}
