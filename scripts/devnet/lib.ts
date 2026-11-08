@@ -126,9 +126,24 @@ export async function ensureFunded(keypair: Keypair, minSol = 2): Promise<number
   const conn = connection();
   const balance = await conn.getBalance(keypair.publicKey);
   if (balance >= minSol * LAMPORTS_PER_SOL) return balance;
-  const signature = await conn.requestAirdrop(keypair.publicKey, minSol * LAMPORTS_PER_SOL);
-  const latest = await conn.getLatestBlockhash(COMMITMENT);
-  await conn.confirmTransaction({ signature, ...latest }, COMMITMENT);
+  const missing = minSol * LAMPORTS_PER_SOL - balance;
+  try {
+    const signature = await conn.requestAirdrop(keypair.publicKey, missing);
+    const latest = await conn.getLatestBlockhash(COMMITMENT);
+    await conn.confirmTransaction({ signature, ...latest }, COMMITMENT);
+  } catch {
+    // Faucet closed (Devnet): top up from the admin wallet instead.
+    const admin = loadKeypair(adminKeypairPath());
+    if (admin.publicKey.equals(keypair.publicKey)) throw new Error("Admin wallet needs funding.");
+    const tx = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: admin.publicKey,
+        toPubkey: keypair.publicKey,
+        lamports: missing,
+      }),
+    );
+    await sendAndConfirmTransaction(conn, tx, [admin], { commitment: COMMITMENT });
+  }
   return conn.getBalance(keypair.publicKey);
 }
 

@@ -65,7 +65,7 @@ LILIA_PERMIT_TTL_SLOTS=300
 - `LILIA_ADMIN_KEYPAIR_PATH` must be the keypair whose public key is the on-chain `upgrade_authority`.
 - Without these settings the v2 endpoints return 503 and no transaction is fabricated.
 
-The program, Permit v2 codec, and v2 API flows are implemented and were exercised end-to-end on a local validator: setup, four live transfer scenarios, and an 18-check acceptance run. Devnet deployment is pending a funded keypair (the public faucets currently require GitHub auth or are closed). See [PHASE_3_ACCEPTANCE_REPORT.md](./docs/PHASE_3_ACCEPTANCE_REPORT.md) for evidence and [scripts/devnet/README.md](./scripts/devnet/README.md) for the run order.
+The program, Permit v2 codec, and v2 API flows are implemented and were exercised end-to-end on a local validator: setup, four live transfer scenarios, and an 18-check acceptance run. It is deployed and verified on Devnet (18/18 acceptance checks); addresses are in [DEVNET_DEPLOYMENT.md](./docs/DEVNET_DEPLOYMENT.md). See [PHASE_3_ACCEPTANCE_REPORT.md](./docs/PHASE_3_ACCEPTANCE_REPORT.md) for evidence and [scripts/devnet/README.md](./scripts/devnet/README.md) for the run order.
 
 ## Useful commands
 
