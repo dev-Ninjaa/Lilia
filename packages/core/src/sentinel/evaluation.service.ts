@@ -1,12 +1,12 @@
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { AgentService } from "@lilia/core/agent/agent.service.ts";
+import { PolicyService } from "@lilia/core/policy/policy.service.ts";
+import { RiskAssessmentService } from "@lilia/core/risk/risk.service.ts";
+import type { RiskResult } from "@lilia/core/risk/risk.types.ts";
+import { RulesEngine } from "@lilia/core/sentinel/rules.engine.ts";
+import { agents, policies } from "@lilia/db/schema/index.ts";
 import { and, desc, eq } from "drizzle-orm";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { agents, policies } from "../../../../database/schema/index.ts";
-import { AgentService } from "../agent/agent.service.ts";
-import { PolicyService } from "../policy/policy.service.ts";
-import { RiskAssessmentService } from "../risk/risk.service.ts";
-import type { RiskResult } from "../risk/risk.types.ts";
-import { RulesEngine } from "./rules.engine.ts";
 
 export class EvaluationService {
   private readonly agents: AgentService;

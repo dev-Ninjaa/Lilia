@@ -1,8 +1,8 @@
+import { parseInput, sendPage, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { SimulationService } from "@lilia/core/simulation/simulation.service.ts";
+import { simulationSchema } from "@lilia/schemas/index.ts";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import { SimulationService } from "../../../../packages/core/src/simulation/simulation.service.ts";
-import { simulationSchema } from "../../../../packages/schemas/src/index.ts";
-import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

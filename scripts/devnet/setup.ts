@@ -1,5 +1,5 @@
+import { findSentinelAuthority } from "@lilia/solana/index.ts";
 import { PublicKey } from "@solana/web3.js";
-import { findSentinelAuthority } from "../../packages/solana/src/index.ts";
 import {
   API_URL,
   type DevnetState,

@@ -1,18 +1,16 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { Navbar } from "../components/Navbar";
-import { LandingPage } from "../components/LandingPage";
-import { DashboardView } from "../components/DashboardView";
-import { AgentsView } from "../components/AgentsView";
-import { PoliciesView } from "../components/PoliciesView";
-import { TransactionsView } from "../components/TransactionsView";
-import { ThreatsView } from "../components/ThreatsView";
-import { SimulationLab } from "../components/SimulationLab";
-import { TransferConsole } from "../components/TransferConsole";
-import { IntegrationsView } from "../components/IntegrationsView";
-import { Footer } from "../components/Footer";
-import { Agent, Policy, Transaction, SecurityEvent } from "../lib/types";
+import { AgentsView } from "@/components/AgentsView";
+import { DashboardView } from "@/components/DashboardView";
+import { Footer } from "@/components/Footer";
+import { IntegrationsView } from "@/components/IntegrationsView";
+import { LandingPage } from "@/components/LandingPage";
+import { Navbar } from "@/components/Navbar";
+import { PoliciesView } from "@/components/PoliciesView";
+import { SimulationLab } from "@/components/SimulationLab";
+import { ThreatsView } from "@/components/ThreatsView";
+import { TransactionsView } from "@/components/TransactionsView";
+import { TransferConsole } from "@/components/TransferConsole";
 import {
   ApiError,
   createPolicy,
@@ -21,13 +19,15 @@ import {
   listPolicies,
   listSecurityEvents,
   listTransactions,
+  publishPolicyOnChain,
   registerAgent,
   registerAgentOnChain,
   setAgentStatusOnChain,
   solanaStatus,
-  publishPolicyOnChain,
-} from "../lib/api";
-import { mapAgent, mapPolicy, mapSecurityEvent, mapTransaction } from "../lib/mappers";
+} from "@/lib/api";
+import { mapAgent, mapPolicy, mapSecurityEvent, mapTransaction } from "@/lib/mappers";
+import type { Agent, Policy, SecurityEvent, Transaction } from "@/lib/types";
+import React, { useCallback, useEffect, useState } from "react";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return `${error.code}: ${error.message}`;
@@ -120,8 +120,7 @@ export default function Home() {
       await registerAgent({
         name: agentData.name ?? "Unnamed Agent",
         description: "",
-        publicKey:
-          agentData.agentPublicKey?.trim() || `web-agent-${Date.now()}`,
+        publicKey: agentData.agentPublicKey?.trim() || `web-agent-${Date.now()}`,
         metadata: agentData.agentId ? { agentId: agentData.agentId } : {},
       });
       await load();
@@ -174,7 +173,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-[#ff6b4a] selection:text-black" style={{ background: "#07080a", color: "#ffffff" }}>
+    <div
+      className="min-h-screen flex flex-col selection:bg-[#ff6b4a] selection:text-black"
+      style={{ background: "#07080a", color: "#ffffff" }}
+    >
       {/* Top Floating Modular Glass Navbar */}
       <Navbar
         currentView={currentView}
@@ -211,6 +213,7 @@ export default function Home() {
                   environment, then retry.
                 </p>
                 <button
+                  type="button"
                   onClick={() => void load()}
                   className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200"
                 >
@@ -252,7 +255,11 @@ export default function Home() {
                 )}
 
                 {activeAppTab === "transfers" && (
-                  <TransferConsole agents={agents} policies={policies} onSubmitted={() => void load()} />
+                  <TransferConsole
+                    agents={agents}
+                    policies={policies}
+                    onSubmitted={() => void load()}
+                  />
                 )}
 
                 {activeAppTab === "threats" && <ThreatsView events={events} />}

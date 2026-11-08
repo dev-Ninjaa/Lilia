@@ -1,6 +1,6 @@
 import { AnchorProvider, type Idl, Program, Wallet } from "@anchor-lang/core";
+import idl from "@lilia/solana/idl/lilia.json";
 import type { Commitment, Connection, Keypair } from "@solana/web3.js";
-import idl from "./idl/lilia.json";
 
 /**
  * Create an Anchor client for the Lilia program.

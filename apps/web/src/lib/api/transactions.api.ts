@@ -1,5 +1,11 @@
-import { request } from "./client.api";
-import type { BackendTransaction, EvaluateResult, PermitV2, PrepareV2Result, SubmitResult } from "./types.api";
+import { request } from "@/lib/api/client.api";
+import type {
+  BackendTransaction,
+  EvaluateResult,
+  PermitV2,
+  PrepareV2Result,
+  SubmitResult,
+} from "@/lib/api/types.api";
 
 export const listTransactions = (limit = 100) =>
   request<BackendTransaction[]>("GET", `/transactions?limit=${limit}`);

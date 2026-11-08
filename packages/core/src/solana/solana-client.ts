@@ -1,9 +1,9 @@
 import { createPrivateKey, createPublicKey, sign as cryptoSign, verify } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { env } from "@lilia/api/config/env.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
-import { env } from "../../../../apps/api/src/config/env.ts";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
 
 let cachedConnection: Connection | undefined;
 let cachedAdmin: Keypair | undefined;

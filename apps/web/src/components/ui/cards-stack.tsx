@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { HTMLMotionProps, motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { type HTMLMotionProps, motion } from "motion/react";
+import * as React from "react";
 
 interface CardStickyProps extends HTMLMotionProps<"div"> {
   index: number;
@@ -10,36 +10,24 @@ interface CardStickyProps extends HTMLMotionProps<"div"> {
   incrementZ?: number;
 }
 
-const ContainerScroll = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLProps<HTMLDivElement>
->(({ children, className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn("relative w-full", className)}
-      style={{ perspective: "1000px", ...props.style }}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-});
+const ContainerScroll = React.forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
+  ({ children, className, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn("relative w-full", className)}
+        style={{ perspective: "1000px", ...props.style }}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  },
+);
 ContainerScroll.displayName = "ContainerScroll";
 
 const CardSticky = React.forwardRef<HTMLDivElement, CardStickyProps>(
-  (
-    {
-      index,
-      incrementY = 16,
-      incrementZ = 12,
-      children,
-      className,
-      style,
-      ...props
-    },
-    ref
-  ) => {
+  ({ index, incrementY = 16, incrementZ = 12, children, className, style, ...props }, ref) => {
     const y = index * incrementY;
     const z = index * incrementZ;
 
@@ -59,7 +47,7 @@ const CardSticky = React.forwardRef<HTMLDivElement, CardStickyProps>(
         {children}
       </motion.div>
     );
-  }
+  },
 );
 
 CardSticky.displayName = "CardSticky";

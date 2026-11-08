@@ -1,11 +1,6 @@
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { agents, policies, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 import { and, count, eq, inArray } from "drizzle-orm";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import {
-  agents,
-  policies,
-  securityEvents,
-  transactions,
-} from "../../../../database/schema/index.ts";
 
 export class SecurityService {
   constructor(private readonly db: LiliaDatabase) {}

@@ -1,10 +1,10 @@
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import type { RiskResult } from "@lilia/core/risk/risk.types.ts";
+import { decodeJson, newId, now } from "@lilia/core/shared.ts";
+import { assessments, securityEvents } from "@lilia/db/schema/index.ts";
 import { eq } from "drizzle-orm";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { assessments, securityEvents } from "../../../../database/schema/index.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { decodeJson, newId, now } from "../shared.ts";
-import type { RiskResult } from "./risk.types.ts";
 
 export class RiskAssessmentService {
   constructor(private readonly db: LiliaDatabase) {}

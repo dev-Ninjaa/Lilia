@@ -1,8 +1,5 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { ApiError } from "./client.ts";
-import { config } from "./config.ts";
+import { ApiError } from "@lilia/mcp/client.ts";
+import { config } from "@lilia/mcp/config.ts";
 import {
   evaluateTransaction,
   getAgent,
@@ -11,12 +8,21 @@ import {
   prepareTransfer,
   requestAuthorization,
   simulateTransfer,
-} from "./tools.ts";
+} from "@lilia/mcp/tools.ts";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
 
-const server = new McpServer({
-  name: "lilia",
-  version: "0.1.0",
-});
+const server = new McpServer(
+  {
+    name: "lilia",
+    version: "0.1.0",
+  },
+  {
+    instructions:
+      "Tools for the Lilia Sentinel: evaluate transfer intents, request signed Ed25519 permits, prepare Token-2022 transactions, simulate off-chain, and look up agents, policies, and transaction status. Amounts are decimal strings. All calls proxy the Lilia REST API with the configured bearer key; never log the key.",
+  },
+);
 
 function textResult(data: unknown) {
   return {
@@ -45,6 +51,14 @@ function errorResult(error: unknown) {
 server.registerTool(
   "evaluate_transaction",
   {
+    title: "Evaluate Transaction",
+    annotations: {
+      title: "Evaluate Transaction",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       "Evaluate a proposed token transfer against owner policy rules and risk heuristics. Returns an assessment with decision (approved/rejected), risk score, and rule reasons. Off-chain only; no permit is issued.",
     inputSchema: {
@@ -71,6 +85,14 @@ server.registerTool(
 server.registerTool(
   "request_authorization",
   {
+    title: "Request Authorization",
+    annotations: {
+      title: "Request Authorization",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
     description:
       'Request a cryptographically signed Ed25519 authorization permit for an approved assessment. Version "1" returns the legacy JSON permit; version "2" returns a canonical Permit v2 with sequence and expiry slot.',
     inputSchema: {
@@ -97,6 +119,14 @@ server.registerTool(
 server.registerTool(
   "prepare_transfer",
   {
+    title: "Prepare Transfer",
+    annotations: {
+      title: "Prepare Transfer",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       'Construct the transaction intent for an issued permit. Version "1" returns a backend intent; version "2" builds the unsigned Token-2022 wire transaction (base64) ready for the transfer authority to sign.',
     inputSchema: {
@@ -120,6 +150,14 @@ server.registerTool(
 server.registerTool(
   "simulate_transfer",
   {
+    title: "Simulate Transfer",
+    annotations: {
+      title: "Simulate Transfer",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       "Run a hypothetical (off-chain) simulation of a transfer against the agent's policy. Returns the sentinel decision and reasons. No on-chain execution is performed.",
     inputSchema: {
@@ -142,6 +180,14 @@ server.registerTool(
 server.registerTool(
   "get_transaction_status",
   {
+    title: "Get Transaction Status",
+    annotations: {
+      title: "Get Transaction Status",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
     description:
       "Retrieve the recorded status of a transaction by its Solana signature, including slot and confirmation state.",
     inputSchema: {
@@ -160,6 +206,14 @@ server.registerTool(
 server.registerTool(
   "get_agent",
   {
+    title: "Get Agent",
+    annotations: {
+      title: "Get Agent",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description: "Retrieve a registered agent's identity, status, keys, and assigned policies.",
     inputSchema: {
       agentId: z.string().uuid().describe("Lilia agent UUID"),
@@ -177,6 +231,14 @@ server.registerTool(
 server.registerTool(
   "get_policy",
   {
+    title: "Get Policy",
+    annotations: {
+      title: "Get Policy",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     description:
       "Inspect a policy's spending limits, allow/block recipient lists, mint allowlist, and on-chain state.",
     inputSchema: {

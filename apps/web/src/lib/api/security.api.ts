@@ -1,5 +1,5 @@
-import { request } from "./client.api";
-import type { BackendEvent, SecurityOverview, SimulationResult } from "./types.api";
+import { request } from "@/lib/api/client.api";
+import type { BackendEvent, SecurityOverview, SimulationResult } from "@/lib/api/types.api";
 
 export const listSecurityEvents = (limit = 100) =>
   request<BackendEvent[]>("GET", `/security/events?limit=${limit}`);

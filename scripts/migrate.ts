@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { env } from "../apps/api/src/config/env.ts";
+import { env } from "@lilia/api/config/env.ts";
 
 const migrationsDir = resolve("database/migrations");
 const filename = resolve(env.DATABASE_URL);

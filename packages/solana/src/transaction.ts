@@ -1,3 +1,4 @@
+import { type PermitPayloadV2, type PubkeyLike, serializePermitV2 } from "@lilia/solana/permit.ts";
 import {
   TOKEN_2022_PROGRAM_ID,
   createTransferCheckedWithTransferHookInstruction,
@@ -11,7 +12,6 @@ import {
   Transaction,
   type TransactionInstruction,
 } from "@solana/web3.js";
-import { type PermitPayloadV2, type PubkeyLike, serializePermitV2 } from "./permit.ts";
 
 export interface BuildPermitTransferParams {
   connection: Connection;

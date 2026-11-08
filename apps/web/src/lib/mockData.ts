@@ -1,4 +1,4 @@
-import { Agent, Policy, Transaction, SecurityEvent, SimulationScenario } from "./types";
+import type { Agent, Policy, SecurityEvent, SimulationScenario, Transaction } from "@/lib/types";
 
 export const DEVNET_TOKEN_2022_MINT = "Token22zP...M1ntUsdc92x4";
 export const OWNER_PUBKEY = "Athar...9xQ2";
@@ -70,10 +70,7 @@ export const INITIAL_POLICIES: Policy[] = [
       "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
       "AgentBeta_3KmA9hR7z2p8L",
     ],
-    blockedRecipients: [
-      "HACKER_DRAIN_WALLET_9x817293",
-      "TORNADO_CASH_ROUTER_DEVNET",
-    ],
+    blockedRecipients: ["HACKER_DRAIN_WALLET_9x817293", "TORNADO_CASH_ROUTER_DEVNET"],
     supportedMint: DEVNET_TOKEN_2022_MINT,
     mintSymbol: "USDC-2022",
     status: "active",
@@ -88,10 +85,7 @@ export const INITIAL_POLICIES: Policy[] = [
     ownerPublicKey: "9xQ2dJ8vK...4a1M",
     maxTransferAmount: 100,
     dailyLimit: 500,
-    allowedRecipients: [
-      "Akash_Compute_Provider_Devnet_72a",
-      "Render_Network_Escrow_Devnet_91b",
-    ],
+    allowedRecipients: ["Akash_Compute_Provider_Devnet_72a", "Render_Network_Escrow_Devnet_91b"],
     blockedRecipients: [],
     supportedMint: DEVNET_TOKEN_2022_MINT,
     mintSymbol: "USDC-2022",
@@ -203,7 +197,8 @@ export const INITIAL_SECURITY_EVENTS: SecurityEvent[] = [
     severity: "critical",
     agentId: "agent-alpha-01",
     agentName: "Agent Alpha",
-    description: "Sentinel blocked 40,000 USDC transfer to unverified address HACKER_DRAIN_WALLET_9x817293.",
+    description:
+      "Sentinel blocked 40,000 USDC transfer to unverified address HACKER_DRAIN_WALLET_9x817293.",
     timestamp: "17:12:11 UTC",
   },
   {
@@ -212,7 +207,8 @@ export const INITIAL_SECURITY_EVENTS: SecurityEvent[] = [
     severity: "high",
     agentId: "agent-alpha-01",
     agentName: "Agent Alpha",
-    description: "Solana Token-2022 Transfer Hook aborted instruction. On-chain spending cap exceeded.",
+    description:
+      "Solana Token-2022 Transfer Hook aborted instruction. On-chain spending cap exceeded.",
     timestamp: "15:40:14 UTC",
   },
   {
@@ -245,7 +241,8 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     amount: 500,
     recipient: "AgentBeta_3KmA9hR7z2p8L",
     expectedOutcome: "SUCCESS",
-    details: "Sentinel checks policy (500 <= 500 limit, allowlisted recipient). Signs Ed25519 permit. Solana Token-2022 Transfer Hook verifies permit and successfully settles transfer on Devnet.",
+    details:
+      "Sentinel checks policy (500 <= 500 limit, allowlisted recipient). Signs Ed25519 permit. Solana Token-2022 Transfer Hook verifies permit and successfully settles transfer on Devnet.",
   },
   {
     id: "scenario-b",
@@ -256,7 +253,8 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     amount: 40000,
     recipient: "HACKER_DRAIN_WALLET_9x817293",
     expectedOutcome: "REJECTED_BY_SENTINEL",
-    details: "Sentinel intercepts transaction intent. Flags extreme limit breach (40,000 > 500 cap) and unknown destination. Sentinel REFUSES to issue permit. Transfer aborted before any Solana gas is spent.",
+    details:
+      "Sentinel intercepts transaction intent. Flags extreme limit breach (40,000 > 500 cap) and unknown destination. Sentinel REFUSES to issue permit. Transfer aborted before any Solana gas is spent.",
   },
   {
     id: "scenario-c",
@@ -267,6 +265,7 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     amount: 5000,
     recipient: "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
     expectedOutcome: "REJECTED_BY_HOOK",
-    details: "Even if a buggy off-chain service or compromised server mistakenly issues an Ed25519 permit, the Solana Token-2022 Transfer Hook program enforces independent on-chain PDA limits and rolls back the transaction.",
+    details:
+      "Even if a buggy off-chain service or compromised server mistakenly issues an Ed25519 permit, the Solana Token-2022 Transfer Hook program enforces independent on-chain PDA limits and rolls back the transaction.",
   },
 ];

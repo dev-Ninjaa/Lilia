@@ -1,6 +1,14 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  createLiliaProgram,
+  findAgentRegistry,
+  findExtraAccountMetas,
+  findPolicy,
+  findSentinelAuthority,
+  serializePermitV2,
+} from "@lilia/solana/index.ts";
+import {
   ExtensionType,
   TOKEN_2022_PROGRAM_ID,
   getExtensionData,
@@ -8,14 +16,6 @@ import {
   getMint,
 } from "@solana/spl-token";
 import { Ed25519Program, PublicKey, Transaction } from "@solana/web3.js";
-import {
-  createLiliaProgram,
-  findAgentRegistry,
-  findExtraAccountMetas,
-  findPolicy,
-  findSentinelAuthority,
-  serializePermitV2,
-} from "../../packages/solana/src/index.ts";
 import { run as runAmount } from "./demo-amount-mismatch.ts";
 import { run as runExpired } from "./demo-expired-permit.ts";
 import { run as runReplay } from "./demo-replay-attack.ts";

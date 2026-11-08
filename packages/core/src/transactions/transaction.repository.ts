@@ -1,6 +1,6 @@
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { transactions } from "@lilia/db/schema/index.ts";
 import { and, eq } from "drizzle-orm";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { transactions } from "../../../../database/schema/index.ts";
 
 export class TransactionRepository {
   constructor(private readonly db: LiliaDatabase) {}

@@ -1,4 +1,4 @@
-# @lilia/mcp-server
+# @lilia/mcp
 
 MCP server exposing Lilia Sentinel tools over the Lilia REST API (stdio transport).
 
@@ -17,8 +17,8 @@ MCP server exposing Lilia Sentinel tools over the Lilia REST API (stdio transpor
 ## Run
 
 ```bash
-bun install            # inside apps/mcp-server
-LILIA_API_KEY=<your key> bun run apps/mcp-server/src/index.ts
+bun install            # inside apps/mcp
+LILIA_API_KEY=<your key> bun run apps/mcp/src/index.ts
 ```
 
 Environment:
@@ -36,7 +36,7 @@ Environment:
   "mcpServers": {
     "lilia": {
       "command": "bun",
-      "args": ["run", "apps/mcp-server/src/index.ts"],
+      "args": ["run", "apps/mcp/src/index.ts"],
       "env": {
         "LILIA_API_KEY": "YOUR_LILIA_API_KEY",
         "SOLANA_NETWORK": "devnet"
@@ -46,4 +46,4 @@ Environment:
 }
 ```
 
-Or, once published, with `bunx @lilia/mcp-server`. Start the API first (`bun run dev` from the repo root).
+Or, once published, with `bunx @lilia/mcp`. Start the API first (`bun run dev` from the repo root).

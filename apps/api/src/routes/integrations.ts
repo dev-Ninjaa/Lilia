@@ -1,7 +1,7 @@
+import { APP_VERSION } from "@lilia/api/config/constants.ts";
+import { env } from "@lilia/api/config/env.ts";
+import { sendSuccess } from "@lilia/api/middleware/error-handler.ts";
 import type { FastifyPluginAsync } from "fastify";
-import { APP_VERSION } from "../config/constants.ts";
-import { env } from "../config/env.ts";
-import { sendSuccess } from "../middleware/error-handler.ts";
 
 const MCP_TOOLS = [
   "evaluate_transaction",
@@ -22,7 +22,7 @@ const routes: FastifyPluginAsync = async (app) => {
         note: "Permit v2 and transfer submission are available when configured.",
       },
       gemini: { status: env.GEMINI_API_KEY ? "configured_but_unused" : "not_configured" },
-      mcp: { status: "available", server: "@lilia/mcp-server", tools: MCP_TOOLS },
+      mcp: { status: "available", server: "@lilia/mcp", tools: MCP_TOOLS },
       database: { status: "connected" },
     }),
   );
@@ -38,7 +38,7 @@ const routes: FastifyPluginAsync = async (app) => {
   app.get("/api/integrations/mcp/status", async (request, reply) =>
     sendSuccess(reply, request, {
       status: "available",
-      server: "@lilia/mcp-server",
+      server: "@lilia/mcp",
       transport: "stdio",
       tools: MCP_TOOLS,
     }),

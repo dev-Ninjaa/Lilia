@@ -1,14 +1,14 @@
-import type { FastifyPluginAsync } from "fastify";
-import { TransactionV2Service } from "../../../../packages/core/src/transactions/transaction-v2.service.ts";
-import { TransactionService } from "../../../../packages/core/src/transactions/transaction.service.ts";
+import { parseInput, sendPage, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { TransactionV2Service } from "@lilia/core/transactions/transaction-v2.service.ts";
+import { TransactionService } from "@lilia/core/transactions/transaction.service.ts";
 import {
   prepareSchema,
   recordSubmissionSchema,
   signatureParams,
   submitSchema,
   transactionListQuery,
-} from "../../../../packages/schemas/src/index.ts";
-import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
+} from "@lilia/schemas/index.ts";
+import type { FastifyPluginAsync } from "fastify";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new TransactionService(app.db);

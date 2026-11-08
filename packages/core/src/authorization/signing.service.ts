@@ -4,8 +4,8 @@ import {
   sign as cryptoSign,
   timingSafeEqual,
 } from "node:crypto";
-import { env } from "../../../../apps/api/src/config/env.ts";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
+import { env } from "@lilia/api/config/env.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
 
 export function validateSigningConfiguration() {
   const privatePem = env.LILIA_SIGNING_PRIVATE_KEY;

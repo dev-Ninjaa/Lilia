@@ -1,6 +1,6 @@
-import type { policies } from "../../../../database/schema/index.ts";
-import type { RiskResult } from "../risk/risk.types.ts";
-import { decimalUnits } from "../shared.ts";
+import type { RiskResult } from "@lilia/core/risk/risk.types.ts";
+import { decimalUnits } from "@lilia/core/shared.ts";
+import type { policies } from "@lilia/db/schema/index.ts";
 
 type Policy = typeof policies.$inferSelect;
 type Transfer = { recipient: string; mint: string; amount: string };

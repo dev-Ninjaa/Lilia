@@ -1,13 +1,10 @@
-import { PublicKey } from "@solana/web3.js";
-import { eq } from "drizzle-orm";
-import { env } from "../../../../apps/api/src/config/env.ts";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { agents, policies, securityEvents } from "../../../../database/schema/index.ts";
-import { AgentService } from "../agent/agent.service.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { PolicyService } from "../policy/policy.service.ts";
-import { now } from "../shared.ts";
+import { env } from "@lilia/api/config/env.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { AgentService } from "@lilia/core/agent/agent.service.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import { PolicyService } from "@lilia/core/policy/policy.service.ts";
+import { now } from "@lilia/core/shared.ts";
 import {
   currentSlot,
   initializeSentinelOnChain,
@@ -15,7 +12,7 @@ import {
   registerAgentOnChain,
   setAgentStatusOnChain,
   updateSentinelOnChain,
-} from "./onchain.service.ts";
+} from "@lilia/core/solana/onchain.service.ts";
 import {
   adminConfigured,
   isSolanaConfigured,
@@ -23,7 +20,10 @@ import {
   sentinelPublicKeyBase58,
   slotForTimestamp,
   toRawAmount,
-} from "./solana-client.ts";
+} from "@lilia/core/solana/solana-client.ts";
+import { agents, policies, securityEvents } from "@lilia/db/schema/index.ts";
+import { PublicKey } from "@solana/web3.js";
+import { eq } from "drizzle-orm";
 
 export class SolanaAdminService {
   private readonly agents: AgentService;

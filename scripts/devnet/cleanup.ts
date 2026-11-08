@@ -1,10 +1,10 @@
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   findAgentRegistry,
   findExtraAccountMetas,
   findPolicy,
   findSentinelAuthority,
-} from "../../packages/solana/src/index.ts";
+} from "@lilia/solana/index.ts";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { PROGRAM_ID, api, connection, loadState } from "./lib.ts";
 
 /**

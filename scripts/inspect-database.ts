@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
-import { env } from "../apps/api/src/config/env.ts";
+import { env } from "@lilia/api/config/env.ts";
 
 const db = new Database(resolve(env.DATABASE_URL), { readonly: true });
 const tables = db

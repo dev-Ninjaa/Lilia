@@ -293,7 +293,7 @@ For each endpoint, unless stated otherwise: header is `Content-Type: application
 - **Method / URL:** `GET /api/integrations`
 - **Purpose / auth:** Report current integration state; Bearer required.
 - **Path/query/body:** None.
-- **Success:** 200 with database connected, Solana not configured (and whether a URL is set), Gemini not configured or configured-but-unused, MCP available (`apps/mcp-server`, 7 tools).
+- **Success:** 200 with database connected, Solana not configured (and whether a URL is set), Gemini not configured or configured-but-unused, MCP available (`apps/mcp`, 7 tools).
 - **Errors / statuses:** 200, 401.
 - **Validation / DB:** Database state is reported; no external integrations are contacted.
 - **Security / integration:** Configuration values/secrets are not returned.
@@ -311,10 +311,10 @@ For each endpoint, unless stated otherwise: header is `Content-Type: application
 - **Method / URL:** `GET /api/integrations/mcp/status`
 - **Purpose / auth:** Report MCP implementation state; Bearer required.
 - **Path/query/body:** None.
-- **Success:** 200 `{"status":"available","server":"@lilia/mcp-server","transport":"stdio","tools":[...]}`.
+- **Success:** 200 `{"status":"available","server":"@lilia/mcp","transport":"stdio","tools":[...]}`.
 - **Errors / statuses:** 200, 401.
 - **Validation / DB:** No database mutation.
-- **Security / integration:** The server (`apps/mcp-server`) is a stdio JSON-RPC process that proxies this API with the same bearer key.
+- **Security / integration:** The server (`apps/mcp`) is a stdio JSON-RPC process that proxies this API with the same bearer key.
 
 #### 28. Health
 - **Method / URL:** `GET /api/health`
@@ -414,7 +414,7 @@ Database lifecycle (v1 flow): evaluation creates an assessment; authorization cr
 
 - **Solana:** the program, Permit v2 codec, and v2 API flows are implemented. They remain **inactive until `SOLANA_RPC_URL` and the key configuration are set**; without configuration the endpoints return 503 `SOLANA_NOT_CONFIGURED`. They have been exercised end-to-end on a local validator (deployment, mint, four live transfer scenarios, 18/18 acceptance checks). Devnet deployment is pending a funded keypair because the public faucets are closed or require GitHub authentication. See `docs/PHASE_3_ACCEPTANCE_REPORT.md`.
 - **Gemini:** optional key is read only for truthful integration reporting; deterministic rules are the only evaluator and cannot be overridden.
-- **MCP:** implemented as `apps/mcp-server` (`@lilia/mcp-server`, stdio transport, 7 tools over the REST API).
+- **MCP:** implemented as `apps/mcp` (`@lilia/mcp`, stdio transport, 7 tools over the REST API).
 
 ## Manual PowerShell workflow
 
@@ -519,7 +519,7 @@ The following results were observed by sending HTTP requests to the running loca
 
 Database verification also confirmed that `bun run db:migrate` could be rerun without reapplying or corrupting the initial migration. The subsequent `bun run db:inspect` reported persisted records: 6 agents, 4 policies, 12 risk assessments, 8 permits, 5 transaction records, 4 simulations, 45 security events, and 1 migration record. Counts include records created during repeated manual verification runs and are not a clean-database fixture.
 
-The runtime checks above were manual HTTP verification; no automated test framework or `tests/` directory was used. They do not verify Solana execution, blockchain confirmation, or Gemini behavior. MCP behavior is verified separately via stdio JSON-RPC against `apps/mcp-server`.
+The runtime checks above were manual HTTP verification; no automated test framework or `tests/` directory was used. They do not verify Solana execution, blockchain confirmation, or Gemini behavior. MCP behavior is verified separately via stdio JSON-RPC against `apps/mcp`.
 
 ---
 

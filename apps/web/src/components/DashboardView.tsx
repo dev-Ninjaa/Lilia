@@ -1,8 +1,18 @@
 "use client";
 
-import React from "react";
-import { Agent, Policy, Transaction, SecurityEvent } from "../lib/types";
-import { Shield, AlertTriangle, ArrowUpRight, CheckCircle2, XCircle, Activity, Lock, Cpu, Clock } from "lucide-react";
+import type { Agent, Policy, SecurityEvent, Transaction } from "@/lib/types";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
+  Cpu,
+  Lock,
+  Shield,
+  XCircle,
+} from "lucide-react";
+import type React from "react";
 
 interface DashboardViewProps {
   agents: Agent[];
@@ -22,7 +32,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const activeCount = agents.filter((a) => a.status === "active").length;
   const executedCount = transactions.filter((t) => t.executionStatus === "EXECUTED").length;
   const rejectedCount = transactions.filter(
-    (t) => t.executionStatus === "REJECTED_ON_CHAIN" || t.executionStatus === "REJECTED_BY_SENTINEL",
+    (t) =>
+      t.executionStatus === "REJECTED_ON_CHAIN" || t.executionStatus === "REJECTED_BY_SENTINEL",
   ).length;
   const protectedVolume = transactions
     .filter((t) => t.executionStatus === "EXECUTED")
@@ -39,7 +50,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#14F195] animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-[#14F195] animate-pulse" />
             <span className="text-xs font-mono font-semibold uppercase text-neutral-400">
               Control Center • System Overview
             </span>
@@ -50,6 +61,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => onNavigateTab("simulation")}
             className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FF5533] text-black font-semibold text-xs active:scale-[0.98] transition-all hover:bg-[#ff6847] shadow-[0_0_16px_rgba(255,85,51,0.25)]"
           >
@@ -68,9 +80,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Cpu className="w-4 h-4 text-[#FF5533]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white font-mono">
-              {activeCount}
-            </span>
+            <span className="text-3xl font-extrabold text-white font-mono">{activeCount}</span>
             <span className="text-xs text-neutral-500 font-mono">/ {agents.length} Total</span>
           </div>
           <div className="mt-3 flex items-center gap-1 text-[11px] text-[#14F195] font-mono">
@@ -145,6 +155,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </p>
             </div>
             <button
+              type="button"
               onClick={() => onNavigateTab("agents")}
               className="text-xs font-mono text-[#FF5533] hover:underline flex items-center gap-1"
             >
@@ -167,9 +178,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">
-                          {agent.name}
-                        </span>
+                        <span className="text-sm font-semibold text-white">{agent.name}</span>
                         <span
                           className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded-full ${
                             agent.status === "active"
@@ -189,13 +198,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="w-full sm:w-48 text-right">
                     <div className="flex justify-between text-xs font-mono text-neutral-400 mb-1">
                       <span>Daily Cap:</span>
-                      <span className="text-white font-bold">{agent.dailySpent} / {agent.dailyCap} USDC</span>
+                      <span className="text-white font-bold">
+                        {agent.dailySpent} / {agent.dailyCap} USDC
+                      </span>
                     </div>
                     <div className="w-full bg-neutral-800 h-1.5 rounded-full overflow-hidden">
                       <div
                         className={`h-full ${pct > 80 ? "bg-red-500" : "bg-[#14F195]"}`}
                         style={{ width: `${pct}%` }}
-                      ></div>
+                      />
                     </div>
                   </div>
                 </div>
@@ -215,6 +226,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <p className="text-xs text-neutral-400 font-mono">Live Sentinel Interceptions</p>
             </div>
             <button
+              type="button"
               onClick={() => onNavigateTab("threats")}
               className="text-xs font-mono text-neutral-400 hover:text-white"
             >
@@ -234,17 +246,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       evt.severity === "critical"
                         ? "bg-red-500/20 text-red-400"
                         : evt.severity === "high"
-                        ? "bg-amber-500/20 text-amber-400"
-                        : "bg-blue-500/20 text-blue-400"
+                          ? "bg-amber-500/20 text-amber-400"
+                          : "bg-blue-500/20 text-blue-400"
                     }`}
                   >
                     {evt.eventType.replace(/_/g, " ")}
                   </span>
                   <span className="text-[10px] text-neutral-500">{evt.timestamp}</span>
                 </div>
-                <p className="text-neutral-300 text-[11px] leading-relaxed">
-                  {evt.description}
-                </p>
+                <p className="text-neutral-300 text-[11px] leading-relaxed">{evt.description}</p>
               </div>
             ))}
           </div>

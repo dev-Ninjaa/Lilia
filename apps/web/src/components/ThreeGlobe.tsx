@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 export const ThreeGlobe: React.FC<{ className?: string }> = ({ className = "" }) => {
@@ -167,5 +168,7 @@ export const ThreeGlobe: React.FC<{ className?: string }> = ({ className = "" })
     };
   }, []);
 
-  return <div ref={containerRef} className={`relative flex items-center justify-center ${className}`} />;
+  return (
+    <div ref={containerRef} className={`relative flex items-center justify-center ${className}`} />
+  );
 };

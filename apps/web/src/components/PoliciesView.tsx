@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Policy } from "../lib/types";
-import { Plus, Lock, Sliders } from "lucide-react";
+import type { Policy } from "@/lib/types";
+import { Lock, Plus, Sliders } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 
 interface PoliciesViewProps {
   policies: Policy[];
@@ -74,6 +75,7 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF5533] text-black font-semibold text-xs active:scale-[0.98] transition-all hover:bg-[#ff6847] shadow-[0_0_16px_rgba(255,85,51,0.2)]"
         >
@@ -95,14 +97,12 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
                   {policy.mintSymbol}
                 </span>
                 <span className="text-xs font-mono text-[#14F195] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#14F195]"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#14F195]" />
                   Active
                 </span>
               </div>
 
-              <h3 className="text-lg font-bold text-white tracking-tight mb-2">
-                {policy.name}
-              </h3>
+              <h3 className="text-lg font-bold text-white tracking-tight mb-2">{policy.name}</h3>
 
               <div className="space-y-3 font-mono text-xs my-4 bg-black/40 p-3.5 rounded-xl border border-white/[0.05]">
                 <div className="flex justify-between items-center">
@@ -136,7 +136,9 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-neutral-600 italic text-[11px]">No allowlist restrictions</span>
+                  <span className="text-neutral-600 italic text-[11px]">
+                    No allowlist restrictions
+                  </span>
                 )}
 
                 {policy.blockedRecipients.length > 0 && (
@@ -162,12 +164,18 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
             <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-neutral-500">
               <span>Token-2022 Transfer Hook</span>
               <span className="text-neutral-400">
-                {policy.onChainPolicyPda ? `PDA v${policy.onChainPolicyVersion ?? 1}` : "Backend only"}
+                {policy.onChainPolicyPda
+                  ? `PDA v${policy.onChainPolicyVersion ?? 1}`
+                  : "Backend only"}
               </span>
             </div>
             {onPublishPolicy && (
               <button
-                onClick={() => { setPublishTarget(policy); setMintDecimals("6"); }}
+                type="button"
+                onClick={() => {
+                  setPublishTarget(policy);
+                  setMintDecimals("6");
+                }}
                 className="mt-3 w-full px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-white font-mono text-xs border border-white/[0.12] transition-all"
               >
                 {policy.onChainPolicyPda ? "Update on-chain" : "Publish on-chain"}
@@ -184,9 +192,12 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
             <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Lock className="w-5 h-5 text-[#FF5533]" />
-                {publishTarget.onChainPolicyPda ? "Update Policy on-chain" : "Publish Policy on-chain"}
+                {publishTarget.onChainPolicyPda
+                  ? "Update Policy on-chain"
+                  : "Publish Policy on-chain"}
               </h3>
               <button
+                type="button"
                 onClick={() => setPublishTarget(null)}
                 className="text-neutral-400 hover:text-white text-lg font-mono"
               >
@@ -202,10 +213,13 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
               className="space-y-4"
             >
               <p className="text-xs font-mono text-neutral-400">
-                Policy: {publishTarget.name} (max {publishTarget.maxTransferAmount}). Requires the agent to be registered on-chain.
+                Policy: {publishTarget.name} (max {publishTarget.maxTransferAmount}). Requires the
+                agent to be registered on-chain.
               </p>
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Mint decimals</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Mint decimals
+                </label>
                 <input
                   type="number"
                   min={0}
@@ -246,6 +260,7 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
                 Create On-Chain Policy
               </h3>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="text-neutral-400 hover:text-white text-lg font-mono"
               >
@@ -255,7 +270,9 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Policy Title</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Policy Title
+                </label>
                 <input
                   type="text"
                   required
@@ -268,7 +285,9 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-mono text-neutral-400 mb-1">Max per Tx (USDC)</label>
+                  <label className="block text-xs font-mono text-neutral-400 mb-1">
+                    Max per Tx (USDC)
+                  </label>
                   <input
                     type="number"
                     required
@@ -278,7 +297,9 @@ export const PoliciesView: React.FC<PoliciesViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono text-neutral-400 mb-1">Daily Cap (USDC)</label>
+                  <label className="block text-xs font-mono text-neutral-400 mb-1">
+                    Daily Cap (USDC)
+                  </label>
                   <input
                     type="number"
                     required

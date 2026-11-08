@@ -1,16 +1,10 @@
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { AgentRepository } from "@lilia/core/agent/agent.repository.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import { decodeJson, newId, now } from "@lilia/core/shared.ts";
+import { agents, permits, policies, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 import { and, eq } from "drizzle-orm";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import {
-  agents,
-  permits,
-  policies,
-  securityEvents,
-  transactions,
-} from "../../../../database/schema/index.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { decodeJson, newId, now } from "../shared.ts";
-import { AgentRepository } from "./agent.repository.ts";
 
 export class AgentService {
   private readonly repository: AgentRepository;

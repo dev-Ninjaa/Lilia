@@ -1,5 +1,5 @@
-import { request } from "./client.api";
-import type { BackendAgent } from "./types.api";
+import { request } from "@/lib/api/client.api";
+import type { BackendAgent } from "@/lib/api/types.api";
 
 export const listAgents = () => request<BackendAgent[]>("GET", "/agents");
 

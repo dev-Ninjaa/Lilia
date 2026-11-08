@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { SIMULATION_SCENARIOS } from "../lib/mockData";
-import { Agent, Policy, SimulationScenario } from "../lib/types";
-import { ApiError, runSimulation } from "../lib/api";
-import { Play, CheckCircle2, XCircle, ShieldCheck, Terminal, RefreshCw } from "lucide-react";
+import { ApiError, runSimulation } from "@/lib/api";
+import { SIMULATION_SCENARIOS } from "@/lib/mockData";
+import type { Agent, Policy, SimulationScenario } from "@/lib/types";
+import { CheckCircle2, Play, RefreshCw, ShieldCheck, Terminal, XCircle } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 
 interface SimulationLabProps {
   agents?: Agent[];
@@ -14,7 +15,9 @@ interface SimulationLabProps {
 type RunStatus = "IDLE" | "RUNNING" | "SUCCESS" | "REJECTED_SENTINEL";
 
 export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], policies = [] }) => {
-  const [selectedScenario, setSelectedScenario] = useState<SimulationScenario>(SIMULATION_SCENARIOS[0]);
+  const [selectedScenario, setSelectedScenario] = useState<SimulationScenario>(
+    SIMULATION_SCENARIOS[0],
+  );
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [status, setStatus] = useState<RunStatus>("IDLE");
@@ -40,7 +43,9 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
     const { agent, policy } = pickTargets();
     append(`[0.00s] Initializing Lilia simulation harness for ${scenario.name}...`);
     if (!agent || !policy) {
-      append("[0.10s] No active agent and policy are available. Register an agent and policy first.");
+      append(
+        "[0.10s] No active agent and policy are available. Register an agent and policy first.",
+      );
       setError("No live agent/policy available for simulation.");
       setIsRunning(false);
       setStatus("IDLE");
@@ -78,13 +83,19 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
         amount,
       });
       const decision = result.result;
-      append(`[0.50s] Sentinel decision: ${decision.decision.toUpperCase()} (risk ${decision.riskScore}/100, ${decision.riskLevel})`);
+      append(
+        `[0.50s] Sentinel decision: ${decision.decision.toUpperCase()} (risk ${decision.riskScore}/100, ${decision.riskLevel})`,
+      );
       for (const reason of decision.reasons) {
         append(`[0.60s]   - [${reason.severity}] ${reason.ruleId}: ${reason.message}`);
       }
-      append(`[0.70s] Blockchain execution: ${decision.blockchainExecution} (no on-chain broadcast).`);
+      append(
+        `[0.70s] Blockchain execution: ${decision.blockchainExecution} (no on-chain broadcast).`,
+      );
       if (scenario.id === "scenario-c") {
-        append("[0.80s] Note: Token-2022 hook enforcement is not exercised by /simulation/run. Use scripts/devnet for on-chain hook verification.");
+        append(
+          "[0.80s] Note: Token-2022 hook enforcement is not exercised by /simulation/run. Use scripts/devnet for on-chain hook verification.",
+        );
       }
       append(
         decision.approved
@@ -118,7 +129,8 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
             Simulation Lab & Threat Demonstration
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
-            Runs real off-chain Sentinel evaluations via POST /api/simulation/run. No on-chain execution is performed.
+            Runs real off-chain Sentinel evaluations via POST /api/simulation/run. No on-chain
+            execution is performed.
           </p>
         </div>
 
@@ -134,6 +146,7 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
         {SIMULATION_SCENARIOS.map((sc) => {
           const isCurrent = selectedScenario.id === sc.id;
           return (
+            // biome-ignore lint/a11y/useKeyWithClickEvents: scenario cards are keyboard-reachable via the Rerun control
             <div
               key={sc.id}
               onClick={() => void runScenario(sc)}
@@ -150,8 +163,8 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
                       sc.id === "scenario-a"
                         ? "bg-emerald-500/20 text-[#14F195]"
                         : sc.id === "scenario-b"
-                        ? "bg-red-500/20 text-red-400"
-                        : "bg-amber-500/20 text-amber-400"
+                          ? "bg-red-500/20 text-red-400"
+                          : "bg-amber-500/20 text-amber-400"
                     }`}
                   >
                     {sc.tag}
@@ -184,9 +197,9 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
         {/* Terminal Header Bar */}
         <div className="flex items-center justify-between pb-3 border-b border-neutral-800 mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+            <div className="w-3 h-3 rounded-full bg-green-500/80" />
             <span className="text-neutral-400 ml-2 text-[11px]">
               sentinel-simulation-cli --scenario {selectedScenario.id}
             </span>
@@ -200,6 +213,7 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
               </span>
             )}
             <button
+              type="button"
               onClick={() => void runScenario(selectedScenario)}
               disabled={isRunning}
               className="px-3 py-1 rounded bg-[#ff6b4a] text-black font-bold text-xs hover:bg-[#ff856b] disabled:opacity-50 cursor-pointer"
@@ -213,7 +227,8 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
         <div className="min-h-[220px] max-h-[340px] overflow-y-auto space-y-1.5 text-neutral-300 pr-2">
           {logs.length === 0 ? (
             <div className="text-neutral-600 italic py-12 text-center">
-              Click any scenario card above or &quot;Rerun Scenario&quot; to run a live Sentinel simulation.
+              Click any scenario card above or &quot;Rerun Scenario&quot; to run a live Sentinel
+              simulation.
             </div>
           ) : (
             logs.map((line, idx) => (
@@ -223,8 +238,8 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
                   line.includes("ERROR") || line.includes("refused")
                     ? "text-[#EF4444] font-bold"
                     : line.includes("approved") || line.includes("RESULT")
-                    ? "text-[#14F195] font-semibold"
-                    : "text-neutral-300"
+                      ? "text-[#14F195] font-semibold"
+                      : "text-neutral-300"
                 }
               >
                 {line}
@@ -234,7 +249,9 @@ export const SimulationLab: React.FC<SimulationLabProps> = ({ agents = [], polic
         </div>
 
         {error && (
-          <div className="mt-4 pt-4 border-t border-neutral-800 font-mono text-xs text-red-400">{error}</div>
+          <div className="mt-4 pt-4 border-t border-neutral-800 font-mono text-xs text-red-400">
+            {error}
+          </div>
         )}
 
         {/* Outcome Card Footer */}

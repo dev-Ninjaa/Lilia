@@ -1,5 +1,10 @@
+import {
+  addressSchema,
+  amountSchema,
+  paginationSchema,
+  uuidSchema,
+} from "@lilia/schemas/common.ts";
 import { z } from "zod";
-import { addressSchema, amountSchema, paginationSchema, uuidSchema } from "./common.ts";
 
 export const evaluateSchema = z.object({
   agentId: uuidSchema,

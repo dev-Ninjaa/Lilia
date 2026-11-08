@@ -28,9 +28,9 @@
       "test-ledger/**",
       ".devnet",
       ".devnet/**",
-      "apps/mcp-server/node_modules",
-      "apps/mcp-server/node_modules/**",
-      "apps/mcp-server/bun.lock",
+      "apps/mcp/node_modules",
+      "apps/mcp/node_modules/**",
+      "apps/mcp/bun.lock",
       "packages/solana/src/idl"
     ]
   }

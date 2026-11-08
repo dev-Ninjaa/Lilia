@@ -1,6 +1,6 @@
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { securityEvents } from "@lilia/db/schema/index.ts";
 import { and, desc, eq } from "drizzle-orm";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { securityEvents } from "../../../../database/schema/index.ts";
 
 export class EventRepository {
   constructor(private readonly db: LiliaDatabase) {}

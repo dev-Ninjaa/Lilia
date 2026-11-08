@@ -9,7 +9,7 @@ Implemented:
 - Modular typed API layer in `src/lib/api/` (`client.api.ts`, `types.api.ts`, `agents.api.ts`, `policies.api.ts`, `transactions.api.ts`, `security.api.ts`, `solana.api.ts`, barrel `index.ts`).
 - `src/lib/mappers.ts` backend→view mapping; Transfer Console (evaluate → authorize v2 → prepare v2 → submit signed wire); agent register-on-chain, policy publish-on-chain, and Sentinel init/rotate admin surfaces.
 - Live Overview/Agents/Policies/Transactions/Threats/Integrations tabs; real Simulation Lab runs (off-chain only).
-- MCP server at `apps/mcp-server` (`@lilia/mcp-server`, stdio, 7 tools over the REST API); backend `/api/integrations/mcp/status` reports `available`.
+- MCP server at `apps/mcp` (`@lilia/mcp`, stdio, 7 tools over the REST API); backend `/api/integrations/mcp/status` reports `available`.
 - On-chain signing stays out of the browser: the user pastes a signed wire transaction for submit.
 
 ## Current state

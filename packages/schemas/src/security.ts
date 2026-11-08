@@ -1,5 +1,5 @@
+import { paginationSchema, uuidSchema } from "@lilia/schemas/common.ts";
 import { z } from "zod";
-import { paginationSchema, uuidSchema } from "./common.ts";
 export const securityQuery = paginationSchema.extend({
   eventType: z.string().max(100).optional(),
   severity: z.enum(["info", "low", "medium", "high", "critical"]).optional(),

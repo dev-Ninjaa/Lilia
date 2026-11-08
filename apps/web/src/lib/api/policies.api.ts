@@ -1,5 +1,5 @@
-import { request } from "./client.api";
-import type { BackendPolicy } from "./types.api";
+import { request } from "@/lib/api/client.api";
+import type { BackendPolicy } from "@/lib/api/types.api";
 
 export const listPolicies = () => request<BackendPolicy[]>("GET", "/policies");
 

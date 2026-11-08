@@ -1,5 +1,5 @@
+import { addressSchema, amountSchema, uuidSchema } from "@lilia/schemas/common.ts";
 import { z } from "zod";
-import { addressSchema, amountSchema, uuidSchema } from "./common.ts";
 
 export const policyFields = {
   name: z.string().trim().min(1).max(100),

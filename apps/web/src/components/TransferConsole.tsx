@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
 import {
   ApiError,
+  type EvaluateResult,
+  type PermitV2,
+  type PrepareV2Result,
   authorizeV2,
   evaluate,
   prepareV2,
   submitTransaction,
-  type EvaluateResult,
-  type PermitV2,
-  type PrepareV2Result,
-} from "../lib/api";
-import type { Agent, Policy } from "../lib/types";
-import { CheckCircle2, XCircle, ArrowRight, RefreshCw, Terminal } from "lucide-react";
+} from "@/lib/api";
+import type { Agent, Policy } from "@/lib/types";
+import { ArrowRight, CheckCircle2, RefreshCw, Terminal, XCircle } from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
 
 interface TransferConsoleProps {
   agents: Agent[];
@@ -155,7 +156,8 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           Transfer Console
         </h2>
         <p className="text-xs text-neutral-400 mt-1">
-          Evaluate → authorize (Permit v2) → prepare (Token-2022 transaction) → submit a signed wire transaction.
+          Evaluate → authorize (Permit v2) → prepare (Token-2022 transaction) → submit a signed wire
+          transaction.
         </p>
       </div>
 
@@ -165,11 +167,17 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <span className="text-xs font-mono text-neutral-400">Agent</span>
           <select
             value={effectiveAgentId}
-            onChange={(e) => { setAgentId(e.target.value); setPolicyId(""); reset(); }}
+            onChange={(e) => {
+              setAgentId(e.target.value);
+              setPolicyId("");
+              reset();
+            }}
             className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           >
             {activeAgents.map((a) => (
-              <option key={a.id} value={a.id} className="bg-[#111317]">{a.name}</option>
+              <option key={a.id} value={a.id} className="bg-[#111317]">
+                {a.name}
+              </option>
             ))}
           </select>
         </label>
@@ -177,7 +185,10 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <span className="text-xs font-mono text-neutral-400">Policy</span>
           <select
             value={effectivePolicyId}
-            onChange={(e) => { setPolicyId(e.target.value); reset(); }}
+            onChange={(e) => {
+              setPolicyId(e.target.value);
+              reset();
+            }}
             className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           >
             {agentPolicies.map((p) => (
@@ -191,7 +202,10 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <span className="text-xs font-mono text-neutral-400">Amount (decimal)</span>
           <input
             value={amount}
-            onChange={(e) => { setAmount(e.target.value); reset(); }}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              reset();
+            }}
             className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           />
         </label>
@@ -199,7 +213,10 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <span className="text-xs font-mono text-neutral-400">Recipient</span>
           <input
             value={recipient}
-            onChange={(e) => { setRecipient(e.target.value); reset(); }}
+            onChange={(e) => {
+              setRecipient(e.target.value);
+              reset();
+            }}
             placeholder="Recipient address"
             className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           />
@@ -208,7 +225,10 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <span className="text-xs font-mono text-neutral-400">Mint</span>
           <input
             value={mint}
-            onChange={(e) => { setMint(e.target.value); reset(); }}
+            onChange={(e) => {
+              setMint(e.target.value);
+              reset();
+            }}
             placeholder="Token-2022 mint"
             className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           />
@@ -235,6 +255,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">1 · Evaluate</h3>
             <button
+              type="button"
               onClick={() => void stepEvaluate()}
               disabled={busy || !effectiveAgentId || !recipient || !mint || !amount}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF5533] text-black font-bold text-xs disabled:opacity-40 hover:bg-[#ff856b]"
@@ -246,8 +267,15 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           </div>
           {evaluation && (
             <div className="font-mono text-xs space-y-1.5 text-neutral-300">
-              <div className={evaluation.decision === "approved" ? "text-[#14F195] font-bold" : "text-red-400 font-bold"}>
-                {evaluation.decision.toUpperCase()} · risk {evaluation.riskScore}/100 ({evaluation.riskLevel})
+              <div
+                className={
+                  evaluation.decision === "approved"
+                    ? "text-[#14F195] font-bold"
+                    : "text-red-400 font-bold"
+                }
+              >
+                {evaluation.decision.toUpperCase()} · risk {evaluation.riskScore}/100 (
+                {evaluation.riskLevel})
               </div>
               <div className="text-neutral-500">assessment {evaluation.id}</div>
               {evaluation.reasons.map((r) => (
@@ -263,6 +291,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">2 · Authorize (Permit v2)</h3>
             <button
+              type="button"
               onClick={() => void stepAuthorize()}
               disabled={busy || !evaluation || evaluation.decision !== "approved"}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF5533] text-black font-bold text-xs disabled:opacity-40 hover:bg-[#ff856b]"
@@ -274,10 +303,15 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           </div>
           {permit && (
             <div className="font-mono text-xs space-y-1.5 text-neutral-300 break-all">
-              <div className="text-[#14F195] font-bold">Sequence {permit.sequence} · expires slot {permit.expiresAtSlot}</div>
+              <div className="text-[#14F195] font-bold">
+                Sequence {permit.sequence} · expires slot {permit.expiresAtSlot}
+              </div>
               <div className="text-neutral-500">permit {permit.id}</div>
               <div className="text-neutral-500">signature {permit.signature.slice(0, 32)}…</div>
-              <div className="text-neutral-500">registry {permit.agentRegistryPda.slice(0, 16)}… policy {permit.policyPda.slice(0, 16)}…</div>
+              <div className="text-neutral-500">
+                registry {permit.agentRegistryPda.slice(0, 16)}… policy{" "}
+                {permit.policyPda.slice(0, 16)}…
+              </div>
             </div>
           )}
         </div>
@@ -286,6 +320,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">3 · Prepare</h3>
             <button
+              type="button"
               onClick={() => void stepPrepare()}
               disabled={busy || !permit}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF5533] text-black font-bold text-xs disabled:opacity-40 hover:bg-[#ff856b]"
@@ -297,10 +332,16 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           </div>
           {prepared && (
             <div className="font-mono text-xs space-y-1.5 text-neutral-300">
-              <div className="text-[#14F195] font-bold">Prepared · blockhash {prepared.blockhash.slice(0, 16)}…</div>
+              <div className="text-[#14F195] font-bold">
+                Prepared · blockhash {prepared.blockhash.slice(0, 16)}…
+              </div>
               <div className="text-neutral-500">transaction {prepared.transactionId}</div>
-              <div className="text-neutral-500 break-all">wire (unsigned, base64) {prepared.transaction.slice(0, 48)}…</div>
-              <div className="text-neutral-500">Sign it with the transfer-authority keypair, then submit below.</div>
+              <div className="text-neutral-500 break-all">
+                wire (unsigned, base64) {prepared.transaction.slice(0, 48)}…
+              </div>
+              <div className="text-neutral-500">
+                Sign it with the transfer-authority keypair, then submit below.
+              </div>
             </div>
           )}
         </div>
@@ -309,6 +350,7 @@ export const TransferConsole: React.FC<TransferConsoleProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">4 · Submit signed wire</h3>
             <button
+              type="button"
               onClick={() => void stepSubmit()}
               disabled={busy || !prepared || !signedTransaction.trim()}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF5533] text-black font-bold text-xs disabled:opacity-40 hover:bg-[#ff856b]"

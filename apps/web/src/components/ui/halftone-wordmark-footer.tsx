@@ -81,17 +81,22 @@ const DEFAULT_LILIA_COLUMNS: FooterColumn[] = [
 
 const SANS_STACK =
   'var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-const MONO_STACK =
-  'var(--font-geist-mono), "Geist Mono", Menlo, Monaco, Consolas, monospace';
+const MONO_STACK = 'var(--font-geist-mono), "Geist Mono", Menlo, Monaco, Consolas, monospace';
 
 export function hwfHex(hex: string) {
   const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((hex || "").trim());
   if (!m) return null;
-  const h = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
+  const h =
+    m[1].length === 3
+      ? m[1]
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : m[1];
   return [
-    parseInt(h.slice(0, 2), 16),
-    parseInt(h.slice(2, 4), 16),
-    parseInt(h.slice(4, 6), 16),
+    Number.parseInt(h.slice(0, 2), 16),
+    Number.parseInt(h.slice(2, 4), 16),
+    Number.parseInt(h.slice(4, 6), 16),
   ];
 }
 
@@ -109,20 +114,22 @@ export function hwfStep(
   hy: number,
   px: number,
   py: number,
-  r: number
+  r: number,
 ) {
   const dx = x - px;
   const dy = y - py;
   const d2 = dx * dx + dy * dy;
+  let nvx = vx;
+  let nvy = vy;
   if (r > 0 && d2 < r * r) {
     const d = Math.sqrt(d2) + 0.001;
     const f = (1 - d / r) * 2.8;
-    vx += (dx / d) * f;
-    vy += (dy / d) * f;
+    nvx += (dx / d) * f;
+    nvy += (dy / d) * f;
   }
-  vx = (vx + (hx - x) * 0.05) * 0.84;
-  vy = (vy + (hy - y) * 0.05) * 0.84;
-  return [x + vx, y + vy, vx, vy];
+  nvx = (nvx + (hx - x) * 0.05) * 0.84;
+  nvy = (nvy + (hy - y) * 0.05) * 0.84;
+  return [x + nvx, y + nvy, nvx, nvy];
 }
 
 export function hwfWarmth(x: number, y: number, hx: number, hy: number, span: number) {
@@ -223,6 +230,7 @@ export default function HalftoneWordmarkFooter({
     fontWeight,
     wordmark,
   };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are a joined key by design
   const key = [
     wordmark,
     dotGap,
@@ -235,6 +243,7 @@ export default function HalftoneWordmarkFooter({
     colors.warm,
   ].join("|");
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: effect reads refs and the joined key by design
   React.useEffect(() => {
     const root = rootRef.current;
     const canvas = canvasRef.current;
@@ -272,11 +281,11 @@ export default function HalftoneWordmarkFooter({
       mask.height = h;
       const m = mask.getContext("2d", { willReadFrequently: true });
       if (!m) return;
-      const face = o.fontWeight + " 100px " + o.fontFamily;
+      const face = `${o.fontWeight} 100px ${o.fontFamily}`;
       m.font = face;
       const word = o.wordmark || "lilia";
       const fit = hwfFitSize(m.measureText(word).width, w * 0.98);
-      m.font = o.fontWeight + " " + fit + "px " + o.fontFamily;
+      m.font = `${o.fontWeight} ${fit}px ${o.fontFamily}`;
       const box = m.measureText(word);
       const cap = box.actualBoundingBoxAscent || fit * 0.72;
       const c = Math.max(0, Math.min(0.6, o.crop));
@@ -332,14 +341,7 @@ export default function HalftoneWordmarkFooter({
       ctx.fillRect(0, 0, w, h);
 
       // Subtle warm ambient radial glow under the canvas
-      const glowGrad = ctx.createRadialGradient(
-        w / 2,
-        h * 0.85,
-        10,
-        w / 2,
-        h * 0.85,
-        w * 0.45
-      );
+      const glowGrad = ctx.createRadialGradient(w / 2, h * 0.85, 10, w / 2, h * 0.85, w * 0.45);
       glowGrad.addColorStop(0, "rgba(255, 107, 74, 0.08)");
       glowGrad.addColorStop(0.5, "rgba(255, 47, 58, 0.03)");
       glowGrad.addColorStop(1, "transparent");
@@ -375,10 +377,7 @@ export default function HalftoneWordmarkFooter({
           y = s[1];
           vx = s[2];
           vy = s[3];
-          if (
-            Math.abs(vx) + Math.abs(vy) > 0.02 ||
-            Math.abs(x - hx) + Math.abs(y - hy) > 0.05
-          )
+          if (Math.abs(vx) + Math.abs(vy) > 0.02 || Math.abs(x - hx) + Math.abs(y - hy) > 0.05)
             moving = true;
           else {
             x = hx;
@@ -394,13 +393,7 @@ export default function HalftoneWordmarkFooter({
         const k = hwfWarmth(x, y, hx, hy, 32);
         ctx.fillStyle =
           k > 0.02
-            ? "rgb(" +
-              Math.round(ink[0] + (warm[0] - ink[0]) * k) +
-              "," +
-              Math.round(ink[1] + (warm[1] - ink[1]) * k) +
-              "," +
-              Math.round(ink[2] + (warm[2] - ink[2]) * k) +
-              ")"
+            ? `rgb(${Math.round(ink[0] + (warm[0] - ink[0]) * k)},${Math.round(ink[1] + (warm[1] - ink[1]) * k)},${Math.round(ink[2] + (warm[2] - ink[2]) * k)})`
             : o.colors.ink;
         ctx.beginPath();
         ctx.arc(x, y, dots[j + 6], 0, 6.2832);
@@ -475,7 +468,7 @@ export default function HalftoneWordmarkFooter({
     io.observe(root);
 
     let alive = true;
-    if (document.fonts && document.fonts.ready) {
+    if (document.fonts?.ready) {
       document.fonts.ready.then(() => {
         if (!alive) return;
         layout();
@@ -501,7 +494,7 @@ export default function HalftoneWordmarkFooter({
   return (
     <footer
       ref={rootRef}
-      className={"hwf-root " + className}
+      className={`hwf-root ${className}`}
       style={
         {
           height,
@@ -512,7 +505,7 @@ export default function HalftoneWordmarkFooter({
       }
     >
       <style>{HWF_CSS}</style>
-      <canvas ref={canvasRef} aria-hidden="true" />
+      <canvas ref={canvasRef} />
       <span className="hwf-sr">{wordmark}</span>
       <div className="hwf-top">
         <div className="hwf-brand">

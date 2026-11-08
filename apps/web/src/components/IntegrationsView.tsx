@@ -1,9 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Copy, Check, Code2, Cpu } from "lucide-react";
-import { ApiError, initializeSentinel, integrationsStatus, rotateSentinel, solanaStatus } from "../lib/api";
-import type { IntegrationsStatus, SolanaStatus } from "../lib/api";
+import {
+  ApiError,
+  initializeSentinel,
+  integrationsStatus,
+  rotateSentinel,
+  solanaStatus,
+} from "@/lib/api";
+import type { IntegrationsStatus, SolanaStatus } from "@/lib/api";
+import { Check, Code2, Copy, Cpu } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 export const IntegrationsView: React.FC = () => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -54,7 +61,7 @@ export const IntegrationsView: React.FC = () => {
   "mcpServers": {
     "lilia": {
       "command": "bunx",
-      "args": ["@lilia/mcp-server"],
+      "args": ["@lilia/mcp"],
       "env": {
         "LILIA_API_KEY": "YOUR_LILIA_API_KEY",
         "SOLANA_NETWORK": "devnet"
@@ -76,37 +83,44 @@ export const IntegrationsView: React.FC = () => {
   const mcpTools = [
     {
       name: "evaluate_transaction",
-      description: "Evaluate a proposed token transfer against owner policy rules and risk heuristics.",
+      description:
+        "Evaluate a proposed token transfer against owner policy rules and risk heuristics.",
       scope: "Off-Chain Sentinel",
     },
     {
       name: "request_authorization",
-      description: "Request a cryptographically signed Ed25519 authorization permit for an approved transaction.",
+      description:
+        "Request a cryptographically signed Ed25519 authorization permit for an approved transaction.",
       scope: "Permit Authority",
     },
     {
       name: "prepare_transfer",
-      description: "Construct the exact Solana Token-2022 instruction set including required Transfer Hook accounts.",
+      description:
+        "Construct the exact Solana Token-2022 instruction set including required Transfer Hook accounts.",
       scope: "Blockchain Prep",
     },
     {
       name: "simulate_transfer",
-      description: "Execute a hypothetical transfer simulation against Devnet to predict hook execution outcome.",
+      description:
+        "Execute a hypothetical transfer simulation against Devnet to predict hook execution outcome.",
       scope: "Simulation Lab",
     },
     {
       name: "get_transaction_status",
-      description: "Retrieve verified on-chain execution status and explorer signatures for an authorized transaction.",
+      description:
+        "Retrieve verified on-chain execution status and explorer signatures for an authorized transaction.",
       scope: "Observer",
     },
     {
       name: "get_agent",
-      description: "Retrieve registered agent identity, active status, public keys, and assigned policies.",
+      description:
+        "Retrieve registered agent identity, active status, public keys, and assigned policies.",
       scope: "Registry",
     },
     {
       name: "get_policy",
-      description: "Inspect spending limits, velocity allowances, and allowlisted recipient public keys.",
+      description:
+        "Inspect spending limits, velocity allowances, and allowlisted recipient public keys.",
       scope: "Policy Engine",
     },
   ];
@@ -126,7 +140,8 @@ export const IntegrationsView: React.FC = () => {
             MCP Server & REST Integration Hub
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
-            Connect Claude Code, Cursor, ElizaOS, or custom Python/TypeScript agents directly to Lilia Sentinel
+            Connect Claude Code, Cursor, ElizaOS, or custom Python/TypeScript agents directly to
+            Lilia Sentinel
           </p>
         </div>
 
@@ -154,9 +169,12 @@ export const IntegrationsView: React.FC = () => {
                 Program: {solana.programId} · Commitment: {solana.commitment}
               </div>
               <div className="text-neutral-400">
-                Sentinel: {solana.sentinelPublicKey ?? "not initialized"} · Slot: {solana.latestSlot ?? "—"}
+                Sentinel: {solana.sentinelPublicKey ?? "not initialized"} · Slot:{" "}
+                {solana.latestSlot ?? "—"}
               </div>
-              <div className="text-neutral-400">Admin configured: {String(solana.adminConfigured)}</div>
+              <div className="text-neutral-400">
+                Admin configured: {String(solana.adminConfigured)}
+              </div>
             </div>
             <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3">
               <div className="text-neutral-500 mb-1">Gemini</div>
@@ -174,7 +192,8 @@ export const IntegrationsView: React.FC = () => {
       <div className="rounded-2xl bg-[#111317] border border-white/[0.08] p-6 space-y-4">
         <h3 className="text-base font-bold text-white">Sentinel administration</h3>
         <p className="text-xs text-neutral-400">
-          Initialize or rotate the on-chain SentinelAuthority. Signed by the configured admin keypair.
+          Initialize or rotate the on-chain SentinelAuthority. Signed by the configured admin
+          keypair.
         </p>
         {adminError && <p className="text-xs font-mono text-red-400">{adminError}</p>}
         <div className="flex flex-col sm:flex-row gap-2">
@@ -185,6 +204,7 @@ export const IntegrationsView: React.FC = () => {
             className="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-white font-mono focus:outline-none focus:border-[#FF5533]"
           />
           <button
+            type="button"
             onClick={() => void sentinelAction("initialize")}
             disabled={adminBusy || !sentinelKey.trim()}
             className="px-4 py-2 rounded-xl bg-[#FF5533] text-black font-semibold text-xs disabled:opacity-40 hover:bg-[#ff6847]"
@@ -192,6 +212,7 @@ export const IntegrationsView: React.FC = () => {
             Initialize
           </button>
           <button
+            type="button"
             onClick={() => void sentinelAction("rotate")}
             disabled={adminBusy || !sentinelKey.trim()}
             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs disabled:opacity-40"
@@ -206,15 +227,17 @@ export const IntegrationsView: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-400" />
               Claude Desktop & Cursor MCP Configuration
             </h3>
             <p className="text-xs text-neutral-400">
-              Paste this configuration into your Claude Desktop or Cursor MCP settings. Runs locally over stdio and proxies the Lilia REST API with your bearer key.
+              Paste this configuration into your Claude Desktop or Cursor MCP settings. Runs locally
+              over stdio and proxies the Lilia REST API with your bearer key.
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => handleCopy("mcp", mcpConfig)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-mono text-white transition-all self-start sm:self-auto"
           >
@@ -254,9 +277,7 @@ export const IntegrationsView: React.FC = () => {
             <tbody className="divide-y divide-white/[0.05] text-neutral-300">
               {mcpTools.map((tool) => (
                 <tr key={tool.name} className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-bold text-[#FF5533]">
-                    {tool.name}()
-                  </td>
+                  <td className="py-3 px-4 font-bold text-[#FF5533]">{tool.name}()</td>
                   <td className="py-3 px-4 text-neutral-300 max-w-md font-sans text-xs">
                     {tool.description}
                   </td>
@@ -277,15 +298,17 @@ export const IntegrationsView: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#14F195]"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#14F195]" />
               Direct Fastify REST Endpoint
             </h3>
             <p className="text-xs text-neutral-400">
-              Evaluate transaction intent and request signed Ed25519 permits directly from backend services.
+              Evaluate transaction intent and request signed Ed25519 permits directly from backend
+              services.
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => handleCopy("curl", curlExample)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-mono text-white transition-all self-start sm:self-auto"
           >

@@ -9,7 +9,16 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["bun", "node"]
+    "types": ["bun", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@lilia/api/*": ["apps/api/src/*"],
+      "@lilia/core/*": ["packages/core/src/*"],
+      "@lilia/schemas/*": ["packages/schemas/src/*"],
+      "@lilia/solana/*": ["packages/solana/src/*"],
+      "@lilia/db/*": ["database/*"],
+      "@lilia/mcp/*": ["apps/mcp/src/*"]
+    }
   },
   "include": ["apps/**/*.ts", "packages/**/*.ts", "database/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["apps/web", "node_modules", "dist"]

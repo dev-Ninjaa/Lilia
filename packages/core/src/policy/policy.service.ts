@@ -1,16 +1,11 @@
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { AgentService } from "@lilia/core/agent/agent.service.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import { PolicyRepository } from "@lilia/core/policy/policy.repository.ts";
+import { decodeJson, newId, now } from "@lilia/core/shared.ts";
+import { permits, policies, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 import { and, eq } from "drizzle-orm";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import {
-  permits,
-  policies,
-  securityEvents,
-  transactions,
-} from "../../../../database/schema/index.ts";
-import { AgentService } from "../agent/agent.service.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { decodeJson, newId, now } from "../shared.ts";
-import { PolicyRepository } from "./policy.repository.ts";
 
 type PolicyFields = {
   name: string;

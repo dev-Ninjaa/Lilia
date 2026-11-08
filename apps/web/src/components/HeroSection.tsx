@@ -1,12 +1,22 @@
 "use client";
 
-import React from "react";
-import { ArrowRight, Terminal, Shield, Sparkles, Code2 } from "lucide-react";
+import { ArrowRight, Code2, Shield, Sparkles, Terminal } from "lucide-react";
+import type React from "react";
 
 /* ─── Inline SVG glyphs ─────────────────────────────────────── */
 function SearchGlyph() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -15,7 +25,17 @@ function SearchGlyph() {
 
 function DeployIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="16 16 12 12 8 16" />
       <line x1="12" y1="12" x2="12" y2="21" />
       <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
@@ -25,7 +45,17 @@ function DeployIcon() {
 
 function ShieldIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
@@ -33,7 +63,17 @@ function ShieldIcon() {
 
 function OpenIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" y1="14" x2="21" y2="3" />
@@ -43,7 +83,17 @@ function OpenIcon() {
 
 function KeyIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
     </svg>
   );
@@ -52,10 +102,7 @@ function KeyIcon() {
 /* ─── SVG Film Grain Filter ─────────────────────────────────── */
 function FilmGrain() {
   return (
-    <svg
-      style={{ position: "absolute", width: 0, height: 0 }}
-      aria-hidden="true"
-    >
+    <svg style={{ position: "absolute", width: 0, height: 0 }} aria-hidden="true">
       <defs>
         <filter id="film-grain">
           <feTurbulence
@@ -158,8 +205,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
             letterSpacing: "-0.025em",
           }}
         >
-          Signatures prove who signed.{" "}
-          <br className="hidden sm:inline" />
+          Signatures prove who signed. <br className="hidden sm:inline" />
           Not whether they were{" "}
           <span
             style={{
@@ -186,9 +232,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
             letterSpacing: "0.005em",
           }}
         >
-          When you hand an autonomous AI agent an unbounded private key, you haven&apos;t built
-          an independent operator—you&apos;ve given root treasury access to software susceptible to prompt injection.
-          Lilia enforces mathematical spending caps and recipient allowlists directly on the validator level.
+          When you hand an autonomous AI agent an unbounded private key, you haven&apos;t built an
+          independent operator—you&apos;ve given root treasury access to software susceptible to
+          prompt injection. Lilia enforces mathematical spending caps and recipient allowlists
+          directly on the validator level.
         </p>
 
         {/* PURPOSEFUL PRIMARY ACTIONS (Explore Protocol moved above!) */}
@@ -223,6 +270,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
           </a>
 
           <button
+            type="button"
             onClick={onLaunchApp}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-all active:scale-[0.98]"
             style={{
@@ -247,7 +295,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
             letterSpacing: "0.01em",
           }}
         >
-          <span style={{ opacity: 0.7 }}>bunx @lilia/mcp-server</span>
+          <span style={{ opacity: 0.7 }}>bunx @lilia/mcp</span>
           <span style={{ opacity: 0.35, margin: "0 10px" }}>·</span>
           <span style={{ opacity: 0.6 }}>Deterministic Solana Token-2022 Transfer Hook</span>
         </p>
@@ -397,9 +445,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchApp }) => {
                   color: row.active ? "#ffb347" : "#9c9c9d",
                   padding: "2px 7px",
                   borderRadius: 5,
-                  background: row.active
-                    ? "rgba(255,107,74,0.16)"
-                    : "rgba(255,255,255,0.05)",
+                  background: row.active ? "rgba(255,107,74,0.16)" : "rgba(255,255,255,0.05)",
                   border: `1px solid ${row.active ? "rgba(255,107,74,0.35)" : "rgba(255,255,255,0.08)"}`,
                   flexShrink: 0,
                 }}

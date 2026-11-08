@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
+import { env } from "@lilia/api/config/env.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
 import type { FastifyRequest } from "fastify";
-import { env } from "../config/env.ts";
-import { AppError } from "./error-handler.ts";
 
 export const OWNER_ID = "lilia-single-owner";
 

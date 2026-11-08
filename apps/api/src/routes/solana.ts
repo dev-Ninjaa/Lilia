@@ -1,10 +1,7 @@
+import { parseInput, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { SolanaAdminService } from "@lilia/core/solana/admin.service.ts";
+import { sentinelInitializeSchema, sentinelRotateSchema } from "@lilia/schemas/index.ts";
 import type { FastifyPluginAsync } from "fastify";
-import { SolanaAdminService } from "../../../../packages/core/src/solana/admin.service.ts";
-import {
-  sentinelInitializeSchema,
-  sentinelRotateSchema,
-} from "../../../../packages/schemas/src/index.ts";
-import { parseInput, sendSuccess } from "../middleware/error-handler.ts";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new SolanaAdminService(app.db);

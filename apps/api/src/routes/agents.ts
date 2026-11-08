@@ -1,6 +1,6 @@
-import type { FastifyPluginAsync } from "fastify";
-import { AgentService } from "../../../../packages/core/src/agent/agent.service.ts";
-import { SolanaAdminService } from "../../../../packages/core/src/solana/admin.service.ts";
+import { parseInput, sendPage, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { AgentService } from "@lilia/core/agent/agent.service.ts";
+import { SolanaAdminService } from "@lilia/core/solana/admin.service.ts";
 import {
   agentIdParams,
   agentListQuery,
@@ -8,8 +8,8 @@ import {
   createAgentSchema,
   registerAgentOnChainSchema,
   updateAgentSchema,
-} from "../../../../packages/schemas/src/index.ts";
-import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
+} from "@lilia/schemas/index.ts";
+import type { FastifyPluginAsync } from "fastify";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new AgentService(app.db);

@@ -1,14 +1,15 @@
 import { createHash } from "node:crypto";
+import { DEFAULT_PERMIT_TTL_SECONDS, PROTOCOL_DOMAIN } from "@lilia/api/config/constants.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
 import {
-  DEFAULT_PERMIT_TTL_SECONDS,
-  PROTOCOL_DOMAIN,
-} from "../../../../apps/api/src/config/constants.ts";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { permits, securityEvents, transactions } from "../../../../database/schema/index.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { now } from "../shared.ts";
-import { type PermitPayload, SigningService, canonicalPermit } from "./signing.service.ts";
+  type PermitPayload,
+  SigningService,
+  canonicalPermit,
+} from "@lilia/core/authorization/signing.service.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import { now } from "@lilia/core/shared.ts";
+import { permits, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 
 export class PermitService {
   private readonly signer = new SigningService();

@@ -1,20 +1,20 @@
 import { BN } from "@anchor-lang/core";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { env } from "../../../../apps/api/src/config/env.ts";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import {
-  createLiliaProgram,
-  findAgentRegistry,
-  findPolicy,
-  findSentinelAuthority,
-} from "../../../solana/src/index.ts";
+import { env } from "@lilia/api/config/env.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
 import {
   adminKeypair,
   getConnection,
   liliaProgramId,
   solanaCommitment,
   uuidToBytes16,
-} from "./solana-client.ts";
+} from "@lilia/core/solana/solana-client.ts";
+import {
+  createLiliaProgram,
+  findAgentRegistry,
+  findPolicy,
+  findSentinelAuthority,
+} from "@lilia/solana/index.ts";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
 
 type InstructionBuilder = {
   accounts(accounts: Record<string, PublicKey>): InstructionBuilder;

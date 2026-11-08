@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 export interface NavItem {
   name: string;
@@ -42,16 +43,12 @@ export function TubelightNavBar({
     <div
       className={cn(
         "fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl",
-        className
+        className,
       )}
     >
       <div className="flex items-center justify-between gap-2.5 p-1.5 md:p-2 rounded-full bg-[#0a0a0e]/80 border border-white/[0.09] backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.08)]">
         {/* Brand Slot (Logo / Wordmark) */}
-        {brandSlot && (
-          <div className="flex items-center pl-2 pr-1 shrink-0">
-            {brandSlot}
-          </div>
-        )}
+        {brandSlot && <div className="flex items-center pl-2 pr-1 shrink-0">{brandSlot}</div>}
 
         {/* Center Nav Items */}
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
@@ -68,7 +65,7 @@ export function TubelightNavBar({
                     strokeWidth={2}
                     className={cn(
                       "shrink-0 transition-colors",
-                      isActive ? "text-[#ff6b4a]" : "text-neutral-400 group-hover:text-white"
+                      isActive ? "text-[#ff6b4a]" : "text-neutral-400 group-hover:text-white",
                     )}
                   />
                 )}
@@ -109,7 +106,7 @@ export function TubelightNavBar({
                   className={cn(
                     "relative group cursor-pointer px-3 md:px-4 py-1.5 md:py-2 rounded-full transition-all flex items-center gap-1.5 select-none",
                     "text-neutral-400 hover:text-white",
-                    isActive && "text-white font-semibold bg-white/[0.04]"
+                    isActive && "text-white font-semibold bg-white/[0.04]",
                   )}
                 >
                   {content}
@@ -125,7 +122,7 @@ export function TubelightNavBar({
                 className={cn(
                   "relative group cursor-pointer px-3 md:px-4 py-1.5 md:py-2 rounded-full transition-all flex items-center gap-1.5 select-none",
                   "text-neutral-400 hover:text-white",
-                  isActive && "text-white font-semibold bg-white/[0.04]"
+                  isActive && "text-white font-semibold bg-white/[0.04]",
                 )}
               >
                 {content}
@@ -135,11 +132,7 @@ export function TubelightNavBar({
         </div>
 
         {/* Action Slot (Wallet / Control Center button) */}
-        {actionSlot && (
-          <div className="flex items-center gap-2 pr-1 shrink-0">
-            {actionSlot}
-          </div>
-        )}
+        {actionSlot && <div className="flex items-center gap-2 pr-1 shrink-0">{actionSlot}</div>}
       </div>
     </div>
   );

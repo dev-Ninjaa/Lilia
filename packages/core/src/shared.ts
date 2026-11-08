@@ -1,4 +1,4 @@
-import { AppError } from "../../../apps/api/src/middleware/error-handler.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
 
 export const now = () => new Date().toISOString();
 export const newId = () => crypto.randomUUID();

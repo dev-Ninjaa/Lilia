@@ -1,4 +1,4 @@
-import { config } from "./config.ts";
+import { config } from "@lilia/mcp/config.ts";
 
 export class ApiError extends Error {
   readonly status: number;

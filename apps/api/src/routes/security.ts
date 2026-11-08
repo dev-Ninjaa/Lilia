@@ -1,13 +1,13 @@
-import type { FastifyPluginAsync } from "fastify";
-import { EventService } from "../../../../packages/core/src/events/event.service.ts";
-import { SecurityService } from "../../../../packages/core/src/security/security.service.ts";
+import { parseInput, sendPage, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { EventService } from "@lilia/core/events/event.service.ts";
+import { SecurityService } from "@lilia/core/security/security.service.ts";
 import {
   agentEventsQuery,
   eventIdParams,
   securityAgentParams,
   securityQuery,
-} from "../../../../packages/schemas/src/index.ts";
-import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
+} from "@lilia/schemas/index.ts";
+import type { FastifyPluginAsync } from "fastify";
 
 const routes: FastifyPluginAsync = async (app) => {
   const events = new EventService(app.db);

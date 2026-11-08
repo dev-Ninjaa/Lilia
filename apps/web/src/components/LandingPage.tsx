@@ -1,23 +1,23 @@
 "use client";
 
-import React from "react";
-import { HeroSection } from "./HeroSection";
-import { SimulationLab } from "./SimulationLab";
-import { ContainerScroll, CardSticky } from "./ui/cards-stack";
+import { HeroSection } from "@/components/HeroSection";
+import { SimulationLab } from "@/components/SimulationLab";
+import { CardSticky, ContainerScroll } from "@/components/ui/cards-stack";
 import {
-  ShieldCheck,
-  Lock,
-  Cpu,
   AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   Code2,
-  Terminal,
-  Zap,
-  ArrowRight,
-  Sparkles,
+  Cpu,
   KeyRound,
   Layers,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  Terminal,
+  Zap,
 } from "lucide-react";
+import type React from "react";
 
 interface LandingPageProps {
   onLaunchApp: () => void;
@@ -115,7 +115,7 @@ pub fn process_transfer_hook(ctx: Context<TransferHook>) -> Result<()> {
   "mcpServers": {
     "lilia": {
       "command": "bunx",
-      "args": ["@lilia/mcp-server"],
+      "args": ["@lilia/mcp"],
       "env": { "SOLANA_NETWORK": "devnet" }
     }
   }
@@ -175,8 +175,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               <div
                 className="absolute -top-32 -right-24 w-[420px] h-[340px] rounded-full pointer-events-none opacity-20 blur-3xl"
                 style={{
-                  background:
-                    "radial-gradient(circle, #ff6b4a 0%, #ff2f3a 50%, transparent 80%)",
+                  background: "radial-gradient(circle, #ff6b4a 0%, #ff2f3a 50%, transparent 80%)",
                 }}
               />
 
@@ -192,20 +191,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
                 <div className="space-y-5 text-base sm:text-lg text-neutral-300 leading-relaxed font-sans font-normal">
                   <p>
-                    In traditional systems architecture, you would never grant an autonomous, probabilistic
-                    background worker root administrative access to the primary database without rate limits,
-                    allowlists, and boundary verification.
+                    In traditional systems architecture, you would never grant an autonomous,
+                    probabilistic background worker root administrative access to the primary
+                    database without rate limits, allowlists, and boundary verification.
                   </p>
                   <p>
-                    Yet across Web3, teams give autonomous LLM agents unchecked access to private keys. 
-                    When an agent parses an untrusted prompt injection, experiences semantic hallucination, 
-                    or miscalculates slippage, it signs an irreversible transaction. Blockchain validators don&apos;t know
-                    the agent was deceived; they only see a valid cryptographic signature and finalize the drain.
+                    Yet across Web3, teams give autonomous LLM agents unchecked access to private
+                    keys. When an agent parses an untrusted prompt injection, experiences semantic
+                    hallucination, or miscalculates slippage, it signs an irreversible transaction.
+                    Blockchain validators don&apos;t know the agent was deceived; they only see a
+                    valid cryptographic signature and finalize the drain.
                   </p>
                   <p className="text-white font-medium border-l-2 border-[#ff6b4a] pl-4 py-1 bg-white/[0.02] rounded-r-lg">
-                    Lilia decouples signing capability from settlement authority. Transactions cannot settle
-                    without an authorized Ed25519 permit issued by our Sentinel and deterministically verified 
-                    by the Solana Token-2022 Transfer Hook at the validator level.
+                    Lilia decouples signing capability from settlement authority. Transactions
+                    cannot settle without an authorized Ed25519 permit issued by our Sentinel and
+                    deterministically verified by the Solana Token-2022 Transfer Hook at the
+                    validator level.
                   </p>
                 </div>
               </div>
@@ -223,8 +224,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 Defense in Depth: From Model Intent to Block Settlement
               </h2>
               <p className="text-sm sm:text-base text-neutral-400 mt-4 leading-relaxed">
-                Four decoupled security rings designed so that a total failure at any layer is caught
-                and neutralized by the next.
+                Four decoupled security rings designed so that a total failure at any layer is
+                caught and neutralized by the next.
               </p>
             </div>
 
@@ -314,7 +315,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                   Execute Real Transaction Scenarios on Solana Devnet
                 </h2>
                 <p className="text-sm text-neutral-400 mt-2">
-                  Test prompt injection interception, spending velocity threshold halts, and consensus rollbacks in real time.
+                  Test prompt injection interception, spending velocity threshold halts, and
+                  consensus rollbacks in real time.
                 </p>
               </div>
 
@@ -334,7 +336,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                   Integrate with Claude, Cursor, and Autonomous Agents in Minutes
                 </h2>
                 <p className="text-sm sm:text-base text-neutral-400 leading-relaxed mb-6 font-sans">
-                  Lilia requires zero changes to your agent reasoning loop. Our MCP server exposes 7 core security tools (`evaluate_transaction`, `request_authorization`, `prepare_transfer`, etc.) directly into any MCP-compatible framework.
+                  Lilia requires zero changes to your agent reasoning loop. Our MCP server exposes 7
+                  core security tools (`evaluate_transaction`, `request_authorization`,
+                  `prepare_transfer`, etc.) directly into any MCP-compatible framework.
                 </p>
                 <div className="space-y-3 font-mono text-xs sm:text-sm text-neutral-300">
                   <div className="flex items-center gap-2.5">
@@ -353,13 +357,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               </div>
 
               <div className="rounded-2xl bg-[#050608] border border-white/[0.08] p-5 font-mono text-xs overflow-x-auto shadow-inner">
-                <div className="text-neutral-500 text-[11px] mb-2">// claude_desktop_config.json</div>
+                <div className="text-neutral-500 text-[11px] mb-2">
+                  {/* claude_desktop_config.json */}
+                </div>
                 <pre className="text-[#ffb347] leading-relaxed text-[11px]">
-{`{
+                  {`{
   "mcpServers": {
     "lilia": {
       "command": "bunx",
-      "args": ["@lilia/mcp-server"],
+      "args": ["@lilia/mcp"],
       "env": {
         "LILIA_API_KEY": "lilia_sec_live_9xQ2...",
         "SOLANA_NETWORK": "devnet"
@@ -375,12 +381,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
           {/* ── FINAL CALL TO ACTION ────────────────────────────── */}
           <section className="text-center py-12 max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-4 leading-tight">
-              Autonomous agents.{" "}
-              <br className="hidden sm:inline" />
+              Autonomous agents. <br className="hidden sm:inline" />
               <span
                 style={{
-                  background:
-                    "linear-gradient(135deg, #ffb347 0%, #ff6b4a 50%, #ff2f3a 100%)",
+                  background: "linear-gradient(135deg, #ffb347 0%, #ff6b4a 50%, #ff2f3a 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -390,7 +394,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               </span>
             </h2>
             <p className="text-neutral-400 text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-              Give autonomous agents the ability to operate on-chain without handing over an unconstrained private key.
+              Give autonomous agents the ability to operate on-chain without handing over an
+              unconstrained private key.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <button
@@ -400,8 +405,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 style={{
                   background: "linear-gradient(135deg, #ff6b4a, #ff2f3a)",
                   color: "#ffffff",
-                  boxShadow:
-                    "0 0 35px rgba(255,107,74,0.45), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  boxShadow: "0 0 35px rgba(255,107,74,0.45), inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}
               >
                 <span>Launch Lilia Control Center</span>

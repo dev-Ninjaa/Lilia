@@ -1,6 +1,6 @@
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { agents } from "@lilia/db/schema/index.ts";
 import { and, count, desc, eq } from "drizzle-orm";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { agents } from "../../../../database/schema/index.ts";
 
 export class AgentRepository {
   constructor(private readonly db: LiliaDatabase) {}

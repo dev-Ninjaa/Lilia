@@ -1,14 +1,14 @@
-import type { FastifyPluginAsync } from "fastify";
-import { PolicyService } from "../../../../packages/core/src/policy/policy.service.ts";
-import { SolanaAdminService } from "../../../../packages/core/src/solana/admin.service.ts";
+import { parseInput, sendPage, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { PolicyService } from "@lilia/core/policy/policy.service.ts";
+import { SolanaAdminService } from "@lilia/core/solana/admin.service.ts";
 import {
   createPolicySchema,
   policyIdParams,
   policyListQuery,
   publishPolicyOnChainSchema,
   updatePolicySchema,
-} from "../../../../packages/schemas/src/index.ts";
-import { parseInput, sendPage, sendSuccess } from "../middleware/error-handler.ts";
+} from "@lilia/schemas/index.ts";
+import type { FastifyPluginAsync } from "fastify";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new PolicyService(app.db);

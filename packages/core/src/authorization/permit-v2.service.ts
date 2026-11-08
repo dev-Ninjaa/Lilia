@@ -1,15 +1,19 @@
 import { createHash } from "node:crypto";
-import { PublicKey } from "@solana/web3.js";
-import { eq } from "drizzle-orm";
-import { env } from "../../../../apps/api/src/config/env.ts";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
+import { env } from "@lilia/api/config/env.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import { EvaluationService } from "@lilia/core/sentinel/evaluation.service.ts";
+import { newId, now } from "@lilia/core/shared.ts";
+import { currentSlot, readAuthorizationSequence } from "@lilia/core/solana/onchain.service.ts";
 import {
-  agents,
-  permits,
-  securityEvents,
-  transactions,
-} from "../../../../database/schema/index.ts";
+  getConnection,
+  liliaProgramId,
+  sentinelPublicKeyBase58,
+  signWithSentinel,
+  toRawAmount,
+} from "@lilia/core/solana/solana-client.ts";
+import { agents, permits, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 import {
   buildPermitNonce,
   deriveTokenAccount,
@@ -17,18 +21,9 @@ import {
   findPolicy,
   getMintDecimals,
   serializePermitV2,
-} from "../../../solana/src/index.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { EvaluationService } from "../sentinel/evaluation.service.ts";
-import { newId, now } from "../shared.ts";
-import { currentSlot, readAuthorizationSequence } from "../solana/onchain.service.ts";
-import {
-  getConnection,
-  liliaProgramId,
-  sentinelPublicKeyBase58,
-  signWithSentinel,
-  toRawAmount,
-} from "../solana/solana-client.ts";
+} from "@lilia/solana/index.ts";
+import { PublicKey } from "@solana/web3.js";
+import { eq } from "drizzle-orm";
 
 export type IssuePermitV2Input = {
   assessmentId: string;

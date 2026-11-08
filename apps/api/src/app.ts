@@ -1,19 +1,19 @@
+import { env } from "@lilia/api/config/env.ts";
+import { authenticate } from "@lilia/api/middleware/authentication.ts";
+import { installErrorHandler } from "@lilia/api/middleware/error-handler.ts";
+import { installRequestContext } from "@lilia/api/middleware/request-context.ts";
+import databasePlugin from "@lilia/api/plugins/database.ts";
+import securityPlugin from "@lilia/api/plugins/security.ts";
+import agentsRoutes from "@lilia/api/routes/agents.ts";
+import integrationsRoutes from "@lilia/api/routes/integrations.ts";
+import policiesRoutes from "@lilia/api/routes/policies.ts";
+import securityRoutes from "@lilia/api/routes/security.ts";
+import sentinelRoutes from "@lilia/api/routes/sentinel.ts";
+import simulationRoutes from "@lilia/api/routes/simulation.ts";
+import solanaRoutes from "@lilia/api/routes/solana.ts";
+import transactionsRoutes from "@lilia/api/routes/transactions.ts";
+import { validateSigningConfiguration } from "@lilia/core/authorization/signing.service.ts";
 import Fastify from "fastify";
-import { validateSigningConfiguration } from "../../../packages/core/src/authorization/signing.service.ts";
-import { env } from "./config/env.ts";
-import { authenticate } from "./middleware/authentication.ts";
-import { installErrorHandler } from "./middleware/error-handler.ts";
-import { installRequestContext } from "./middleware/request-context.ts";
-import databasePlugin from "./plugins/database.ts";
-import securityPlugin from "./plugins/security.ts";
-import agentsRoutes from "./routes/agents.ts";
-import integrationsRoutes from "./routes/integrations.ts";
-import policiesRoutes from "./routes/policies.ts";
-import securityRoutes from "./routes/security.ts";
-import sentinelRoutes from "./routes/sentinel.ts";
-import simulationRoutes from "./routes/simulation.ts";
-import solanaRoutes from "./routes/solana.ts";
-import transactionsRoutes from "./routes/transactions.ts";
 
 export async function buildApp() {
   validateSigningConfiguration();

@@ -1,5 +1,5 @@
+import { uuidSchema } from "@lilia/schemas/common.ts";
 import { z } from "zod";
-import { uuidSchema } from "./common.ts";
 
 /** Base58 Solana address (32-byte public key). */
 export const solanaAddressSchema = z

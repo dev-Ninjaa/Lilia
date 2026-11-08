@@ -1,10 +1,10 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { env } from "@lilia/api/config/env.ts";
+import * as schema from "@lilia/db/schema/index.ts";
 import { type BunSQLiteDatabase, drizzle } from "drizzle-orm/bun-sqlite";
 import fp from "fastify-plugin";
-import * as schema from "../../../../database/schema/index.ts";
-import { env } from "../config/env.ts";
 
 export type LiliaDatabase = BunSQLiteDatabase<typeof schema>;
 

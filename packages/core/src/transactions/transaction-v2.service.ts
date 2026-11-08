@@ -1,15 +1,18 @@
 import { createHash } from "node:crypto";
-import { PublicKey } from "@solana/web3.js";
-import { and, eq } from "drizzle-orm";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { AgentService } from "@lilia/core/agent/agent.service.ts";
+import { eventRecord } from "@lilia/core/events/event.service.ts";
+import { now } from "@lilia/core/shared.ts";
+import { currentSlot } from "@lilia/core/solana/onchain.service.ts";
 import {
-  agents,
-  permits,
-  policies,
-  securityEvents,
-  transactions,
-} from "../../../../database/schema/index.ts";
+  getConnection,
+  sentinelPublicKey,
+  solanaCommitment,
+  toRawAmount,
+  verifySentinelSignature,
+} from "@lilia/core/solana/solana-client.ts";
+import { agents, permits, policies, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 import {
   PERMIT_V2_LENGTH,
   buildPermitTransferTransaction,
@@ -18,18 +21,9 @@ import {
   serializePermitV2,
   serializeUnsignedTransaction,
   waitForSignature,
-} from "../../../solana/src/index.ts";
-import { AgentService } from "../agent/agent.service.ts";
-import { eventRecord } from "../events/event.service.ts";
-import { now } from "../shared.ts";
-import { currentSlot } from "../solana/onchain.service.ts";
-import {
-  getConnection,
-  sentinelPublicKey,
-  solanaCommitment,
-  toRawAmount,
-  verifySentinelSignature,
-} from "../solana/solana-client.ts";
+} from "@lilia/solana/index.ts";
+import { PublicKey } from "@solana/web3.js";
+import { and, eq } from "drizzle-orm";
 
 export type PrepareV2Input = {
   permitId: string;

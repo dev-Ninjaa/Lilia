@@ -1,10 +1,5 @@
-import type {
-  BackendAgent,
-  BackendEvent,
-  BackendPolicy,
-  BackendTransaction,
-} from "./api";
-import type { Agent, Policy, SecurityEvent, Transaction } from "./types";
+import type { BackendAgent, BackendEvent, BackendPolicy, BackendTransaction } from "@/lib/api";
+import type { Agent, Policy, SecurityEvent, Transaction } from "@/lib/types";
 
 /**
  * Map backend rows to the view models the dashboard components already render.
@@ -18,11 +13,7 @@ function shortId(id: string): string {
   return id.length > 13 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
 }
 
-export function mapAgent(
-  row: BackendAgent,
-  policyId = "",
-  dailyCap = 1000,
-): Agent {
+export function mapAgent(row: BackendAgent, policyId = "", dailyCap = 1000): Agent {
   const metadata = row.metadata ?? {};
   const agentId =
     typeof metadata.agentId === "string" && metadata.agentId.length > 0
@@ -73,9 +64,7 @@ export function mapPolicy(row: BackendPolicy): Policy {
   };
 }
 
-function toExecutionStatus(
-  status: string,
-): Transaction["executionStatus"] {
+function toExecutionStatus(status: string): Transaction["executionStatus"] {
   switch (status) {
     case "confirmed":
       return "EXECUTED";
@@ -88,10 +77,7 @@ function toExecutionStatus(
   }
 }
 
-export function mapTransaction(
-  row: BackendTransaction,
-  agentName: string,
-): Transaction {
+export function mapTransaction(row: BackendTransaction, agentName: string): Transaction {
   const status = row.status ?? "";
   const failure = row.failureReason ?? row.errorMessage ?? undefined;
   return {
@@ -120,10 +106,7 @@ export function mapTransaction(
   };
 }
 
-export function mapSecurityEvent(
-  row: BackendEvent,
-  agentName: string,
-): SecurityEvent {
+export function mapSecurityEvent(row: BackendEvent, agentName: string): SecurityEvent {
   const severity = row.severity;
   const safeSeverity: SecurityEvent["severity"] =
     severity === "critical" ||

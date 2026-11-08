@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import HalftoneWordmarkFooter from "./ui/halftone-wordmark-footer";
+import HalftoneWordmarkFooter from "@/components/ui/halftone-wordmark-footer";
+import type React from "react";
 
 export const Footer: React.FC = () => {
   return (

@@ -1,5 +1,5 @@
-import { buildApp } from "./app.ts";
-import { env } from "./config/env.ts";
+import { buildApp } from "@lilia/api/app.ts";
+import { env } from "@lilia/api/config/env.ts";
 
 const app = await buildApp();
 try {

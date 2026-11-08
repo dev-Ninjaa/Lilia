@@ -1,5 +1,5 @@
-export { ApiError, request } from "./client.api";
-export type { ApiErrorBody } from "./client.api";
+export { ApiError, request } from "@/lib/api/client.api";
+export type { ApiErrorBody } from "@/lib/api/client.api";
 export type {
   BackendAgent,
   BackendEvent,
@@ -13,15 +13,15 @@ export type {
   SimulationResult,
   SolanaStatus,
   SubmitResult,
-} from "./types.api";
+} from "@/lib/api/types.api";
 export {
   disableAgent,
   listAgents,
   registerAgent,
   registerAgentOnChain,
   setAgentStatusOnChain,
-} from "./agents.api";
-export { createPolicy, listPolicies, publishPolicyOnChain } from "./policies.api";
+} from "@/lib/api/agents.api";
+export { createPolicy, listPolicies, publishPolicyOnChain } from "@/lib/api/policies.api";
 export {
   authorizeV2,
   evaluate,
@@ -29,11 +29,11 @@ export {
   prepareV2,
   recordSubmission,
   submitTransaction,
-} from "./transactions.api";
-export { listSecurityEvents, runSimulation, securityOverview } from "./security.api";
+} from "@/lib/api/transactions.api";
+export { listSecurityEvents, runSimulation, securityOverview } from "@/lib/api/security.api";
 export {
   initializeSentinel,
   integrationsStatus,
   rotateSentinel,
   solanaStatus,
-} from "./solana.api";
+} from "@/lib/api/solana.api";

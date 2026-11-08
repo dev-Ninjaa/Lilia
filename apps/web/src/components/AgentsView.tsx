@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Agent, Policy } from "../lib/types";
-import { Plus, Search, ShieldAlert, Power, UserPlus, Copy, Check } from "lucide-react";
+import type { Agent, Policy } from "@/lib/types";
+import { Check, Copy, Plus, Power, Search, ShieldAlert, UserPlus } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 
 interface AgentsViewProps {
   agents: Agent[];
@@ -105,6 +106,7 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF5533] text-black font-semibold text-xs active:scale-[0.98] transition-all hover:bg-[#ff6847] shadow-[0_0_16px_rgba(255,85,51,0.2)]"
         >
@@ -128,25 +130,34 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
 
         <div className="flex items-center gap-1.5 self-end sm:self-auto text-xs font-mono">
           <button
+            type="button"
             onClick={() => setFilter("all")}
             className={`px-3 py-1 rounded-lg transition-all ${
-              filter === "all" ? "bg-white text-black font-bold" : "text-neutral-400 hover:text-white"
+              filter === "all"
+                ? "bg-white text-black font-bold"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             All ({agents.length})
           </button>
           <button
+            type="button"
             onClick={() => setFilter("active")}
             className={`px-3 py-1 rounded-lg transition-all ${
-              filter === "active" ? "bg-[#14F195] text-black font-bold" : "text-neutral-400 hover:text-white"
+              filter === "active"
+                ? "bg-[#14F195] text-black font-bold"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             Active
           </button>
           <button
+            type="button"
             onClick={() => setFilter("disabled")}
             className={`px-3 py-1 rounded-lg transition-all ${
-              filter === "disabled" ? "bg-red-500 text-white font-bold" : "text-neutral-400 hover:text-white"
+              filter === "disabled"
+                ? "bg-red-500 text-white font-bold"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             Disabled
@@ -182,6 +193,7 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                       <div className="flex items-center gap-1.5 text-neutral-400">
                         <span>{agent.agentPublicKey}</span>
                         <button
+                          type="button"
                           onClick={() => handleCopy(agent.id, agent.agentPublicKey)}
                           className="hover:text-white"
                         >
@@ -195,8 +207,12 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <span className="text-white font-medium">{policy?.name || "Default Cap"}</span>
-                      <div className="text-[10px] text-neutral-500">Max {policy?.maxTransferAmount || 500} USDC / tx</div>
+                      <span className="text-white font-medium">
+                        {policy?.name || "Default Cap"}
+                      </span>
+                      <div className="text-[10px] text-neutral-500">
+                        Max {policy?.maxTransferAmount || 500} USDC / tx
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4">
@@ -218,7 +234,7 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                           className={`w-1.5 h-1.5 rounded-full ${
                             agent.status === "active" ? "bg-[#14F195]" : "bg-red-500"
                           }`}
-                        ></span>
+                        />
                         {agent.status}
                       </span>
                     </td>
@@ -226,25 +242,37 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
+                          type="button"
                           onClick={() => openOnChain(agent)}
                           disabled={Boolean(agent.onChainRegistryPda)}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.98] transition-all bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.15] disabled:opacity-40"
-                          title={agent.onChainRegistryPda ? `Registry ${agent.onChainRegistryPda}` : "Register AgentRegistry on-chain"}
+                          title={
+                            agent.onChainRegistryPda
+                              ? `Registry ${agent.onChainRegistryPda}`
+                              : "Register AgentRegistry on-chain"
+                          }
                         >
                           <ShieldAlert className="w-3.5 h-3.5" />
                           <span>{agent.onChainRegistryPda ? "On-chain ✓" : "On-chain"}</span>
                         </button>
                         <button
+                          type="button"
                           onClick={() => onToggleAgent(agent.id)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold active:scale-[0.98] transition-all ${
                             agent.status === "active"
                               ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30"
                               : "bg-emerald-500/10 hover:bg-emerald-500/20 text-[#14F195] border border-emerald-500/30"
                           }`}
-                          title={agent.status === "active" ? "Emergency Kill Switch" : "Re-activate Agent"}
+                          title={
+                            agent.status === "active"
+                              ? "Emergency Kill Switch"
+                              : "Re-activate Agent"
+                          }
                         >
                           <Power className="w-3.5 h-3.5" />
-                          <span>{agent.status === "active" ? "Disable Agent" : "Enable Agent"}</span>
+                          <span>
+                            {agent.status === "active" ? "Disable Agent" : "Enable Agent"}
+                          </span>
                         </button>
                       </div>
                     </td>
@@ -266,6 +294,7 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                 Register Agent Identity
               </h3>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="text-neutral-400 hover:text-white text-lg font-mono"
               >
@@ -275,7 +304,9 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Agent Friendly Name</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Agent Friendly Name
+                </label>
                 <input
                   type="text"
                   required
@@ -287,7 +318,9 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Unique Agent Identifier</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Unique Agent Identifier
+                </label>
                 <input
                   type="text"
                   required
@@ -299,7 +332,9 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Agent Public Key (Solana Wallet)</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Agent Public Key (Solana Wallet)
+                </label>
                 <input
                   type="text"
                   placeholder="Base58 public key (required for on-chain registration)"
@@ -310,7 +345,9 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Assign Security Policy</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Assign Security Policy
+                </label>
                 <select
                   value={selectedPolicy}
                   onChange={(e) => setSelectedPolicy(e.target.value)}
@@ -354,6 +391,7 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                 Register AgentRegistry on-chain
               </h3>
               <button
+                type="button"
                 onClick={() => setOnChainAgent(null)}
                 className="text-neutral-400 hover:text-white text-lg font-mono"
               >
@@ -363,10 +401,13 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
 
             <form onSubmit={submitOnChain} className="space-y-4">
               <p className="text-xs font-mono text-neutral-400">
-                Agent: {onChainAgent.name} · Creates the AgentRegistry PDA signed by the configured admin keypair.
+                Agent: {onChainAgent.name} · Creates the AgentRegistry PDA signed by the configured
+                admin keypair.
               </p>
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Transfer authority (base58)</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Transfer authority (base58)
+                </label>
                 <input
                   type="text"
                   required
@@ -376,7 +417,9 @@ export const AgentsView: React.FC<AgentsViewProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-mono text-neutral-400 mb-1">Agent identity key (base58)</label>
+                <label className="block text-xs font-mono text-neutral-400 mb-1">
+                  Agent identity key (base58)
+                </label>
                 <input
                   type="text"
                   required

@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import { PERMIT_V2_DOMAIN, PERMIT_V2_LENGTH, PERMIT_V2_VERSION } from "./constants.ts";
+import { PERMIT_V2_DOMAIN, PERMIT_V2_LENGTH, PERMIT_V2_VERSION } from "@lilia/solana/constants.ts";
 import {
   deriveTokenAccount,
   findAgentRegistry,
   findExtraAccountMetas,
   findPolicy,
   findSentinelAuthority,
-} from "./pda.ts";
+} from "@lilia/solana/pda.ts";
 import {
   type PermitPayloadV2,
   buildPermitNonce,
@@ -15,7 +14,8 @@ import {
   permitEntropy,
   permitSequence,
   serializePermitV2,
-} from "./permit.ts";
+} from "@lilia/solana/permit.ts";
+import { Keypair, PublicKey } from "@solana/web3.js";
 
 function keypairPubkey(): PublicKey {
   return Keypair.generate().publicKey;

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Transaction } from "../lib/types";
-import { Search, ExternalLink, Code, Copy, Check } from "lucide-react";
+import type { Transaction } from "@/lib/types";
+import { Check, Code, Copy, ExternalLink, Search } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -18,7 +19,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
       t.agentName.toLowerCase().includes(search.toLowerCase()) ||
       t.sender.toLowerCase().includes(search.toLowerCase()) ||
       t.recipient.toLowerCase().includes(search.toLowerCase()) ||
-      (t.txSignature && t.txSignature.toLowerCase().includes(search.toLowerCase()))
+      t.txSignature?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleCopy = (text: string) => {
@@ -74,6 +75,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
             </thead>
             <tbody className="divide-y divide-white/[0.05] text-neutral-300">
               {filtered.map((tx) => (
+                // biome-ignore lint/a11y/useKeyWithClickEvents: rows also expose an Inspect button for keyboard users
                 <tr
                   key={tx.id}
                   onClick={() => setSelectedTx(tx)}
@@ -83,9 +85,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                     {tx.createdAt.split("T")[1]?.replace("Z", "")}
                   </td>
 
-                  <td className="py-3 px-4 font-sans font-semibold text-white">
-                    {tx.agentName}
-                  </td>
+                  <td className="py-3 px-4 font-sans font-semibold text-white">{tx.agentName}</td>
 
                   <td className="py-3 px-4">
                     <span className="font-bold text-white">{tx.amount}</span>{" "}
@@ -116,10 +116,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                         tx.executionStatus === "EXECUTED"
                           ? "bg-emerald-500/20 text-[#14F195]"
                           : tx.executionStatus === "PENDING"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : tx.executionStatus === "REJECTED_ON_CHAIN"
-                          ? "bg-amber-500/20 text-amber-400"
-                          : "bg-red-500/20 text-red-400"
+                            ? "bg-blue-500/20 text-blue-400"
+                            : tx.executionStatus === "REJECTED_ON_CHAIN"
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "bg-red-500/20 text-red-400"
                       }`}
                     >
                       {tx.executionStatus}
@@ -128,6 +128,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
                   <td className="py-3 px-4 text-right">
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedTx(tx);
@@ -157,6 +158,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                 <span className="text-xs font-mono text-neutral-500">ID: {selectedTx.id}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedTx(null)}
                 className="text-neutral-400 hover:text-white text-lg font-mono"
               >
@@ -171,10 +173,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                   selectedTx.executionStatus === "EXECUTED"
                     ? "bg-emerald-500/10 border-emerald-500/30 text-[#14F195]"
                     : selectedTx.executionStatus === "PENDING"
-                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                    : selectedTx.executionStatus === "REJECTED_ON_CHAIN"
-                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                    : "bg-red-500/10 border-red-500/30 text-red-400"
+                      ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                      : selectedTx.executionStatus === "REJECTED_ON_CHAIN"
+                        ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                        : "bg-red-500/10 border-red-500/30 text-red-400"
                 }`}
               >
                 <div>
@@ -182,10 +184,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                     {selectedTx.executionStatus === "EXECUTED"
                       ? "Token-2022 Transfer Confirmed on Devnet"
                       : selectedTx.executionStatus === "PENDING"
-                      ? "Prepared / submitted, awaiting confirmation"
-                      : selectedTx.executionStatus === "REJECTED_ON_CHAIN"
-                      ? "On-Chain Transfer Hook Reverted Transaction"
-                      : "Sentinel Pre-emptively Blocked Transfer"}
+                        ? "Prepared / submitted, awaiting confirmation"
+                        : selectedTx.executionStatus === "REJECTED_ON_CHAIN"
+                          ? "On-Chain Transfer Hook Reverted Transaction"
+                          : "Sentinel Pre-emptively Blocked Transfer"}
                   </div>
                   <div className="text-[11px] opacity-90 mt-0.5">
                     {selectedTx.riskReason || "Verified against active owner policy."}
@@ -198,6 +200,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                 <div className="flex items-center justify-between text-neutral-400 mb-1">
                   <span>Transaction record (backend):</span>
                   <button
+                    type="button"
                     onClick={() =>
                       handleCopy(
                         JSON.stringify(
@@ -215,35 +218,39 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                             signature: selectedTx.txSignature ?? null,
                           },
                           null,
-                          2
-                        )
+                          2,
+                        ),
                       )
                     }
                     className="flex items-center gap-1 hover:text-white text-[11px]"
                   >
-                    {copied ? <Check className="w-3 h-3 text-[#14F195]" /> : <Copy className="w-3 h-3" />}
+                    {copied ? (
+                      <Check className="w-3 h-3 text-[#14F195]" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
                     <span>{copied ? "Copied" : "Copy Payload"}</span>
                   </button>
                 </div>
 
                 <pre className="p-3.5 rounded-xl bg-black/60 border border-white/[0.08] text-[#14F195] overflow-x-auto text-[11px] leading-relaxed">
-{JSON.stringify(
-  {
-    id: selectedTx.id,
-    status: selectedTx.backendStatus,
-    flowVersion: selectedTx.flowVersion,
-    agentId: selectedTx.agentId,
-    permitId: selectedTx.permitId,
-    amount: String(selectedTx.amount),
-    mint: selectedTx.mint,
-    recipient: selectedTx.recipient,
-    slot: selectedTx.slot,
-    blockhash: selectedTx.blockhash,
-    signature: selectedTx.txSignature ?? null,
-  },
-  null,
-  2
-)}
+                  {JSON.stringify(
+                    {
+                      id: selectedTx.id,
+                      status: selectedTx.backendStatus,
+                      flowVersion: selectedTx.flowVersion,
+                      agentId: selectedTx.agentId,
+                      permitId: selectedTx.permitId,
+                      amount: String(selectedTx.amount),
+                      mint: selectedTx.mint,
+                      recipient: selectedTx.recipient,
+                      slot: selectedTx.slot,
+                      blockhash: selectedTx.blockhash,
+                      signature: selectedTx.txSignature ?? null,
+                    },
+                    null,
+                    2,
+                  )}
                 </pre>
               </div>
 
@@ -279,6 +286,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
               <div className="pt-2 flex justify-end">
                 <button
+                  type="button"
                   onClick={() => setSelectedTx(null)}
                   className="px-5 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-200"
                 >

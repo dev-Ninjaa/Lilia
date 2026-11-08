@@ -1,21 +1,21 @@
 "use client";
 
-import React from "react";
-import { TubelightNavBar, NavItem } from "./ui/tubelight-navbar";
+import { type NavItem, TubelightNavBar } from "@/components/ui/tubelight-navbar";
 import {
-  Shield,
-  Layers,
-  Terminal,
-  Code2,
-  LayoutDashboard,
-  Users,
-  Lock,
   Activity,
   AlertTriangle,
   ArrowRight,
   ArrowUpRight,
+  Code2,
   Globe,
+  Layers,
+  LayoutDashboard,
+  Lock,
+  Shield,
+  Terminal,
+  Users,
 } from "lucide-react";
+import type React from "react";
 
 interface NavbarProps {
   currentView: "landing" | "app";
@@ -28,13 +28,7 @@ interface NavbarProps {
 
 function DiamondGlyph() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 2L4 9l8 13 8-13L12 2z"
         fill="url(#diamond-nav-grad)"

@@ -1,9 +1,9 @@
+import { AppError } from "@lilia/api/middleware/error-handler.ts";
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { EventRepository } from "@lilia/core/events/event.repository.ts";
+import { decodeJson, newId, now, pageOffset } from "@lilia/core/shared.ts";
+import { agents, securityEvents, transactions } from "@lilia/db/schema/index.ts";
 import { type SQL, and, count, desc, eq, inArray } from "drizzle-orm";
-import { AppError } from "../../../../apps/api/src/middleware/error-handler.ts";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { agents, securityEvents, transactions } from "../../../../database/schema/index.ts";
-import { decodeJson, newId, now, pageOffset } from "../shared.ts";
-import { EventRepository } from "./event.repository.ts";
 
 type EventInput = {
   agentId?: string | null;

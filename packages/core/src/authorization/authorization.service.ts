@@ -1,8 +1,8 @@
+import type { LiliaDatabase } from "@lilia/api/plugins/database.ts";
+import { PermitService } from "@lilia/core/authorization/permit.service.ts";
+import { EvaluationService } from "@lilia/core/sentinel/evaluation.service.ts";
+import { permits } from "@lilia/db/schema/index.ts";
 import { eq } from "drizzle-orm";
-import type { LiliaDatabase } from "../../../../apps/api/src/plugins/database.ts";
-import { permits } from "../../../../database/schema/index.ts";
-import { EvaluationService } from "../sentinel/evaluation.service.ts";
-import { PermitService } from "./permit.service.ts";
 
 export class AuthorizationService {
   private readonly evaluation: EvaluationService;

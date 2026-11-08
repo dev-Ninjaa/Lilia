@@ -1,11 +1,11 @@
 {
-  "name": "@lilia/mcp-server",
+  "name": "@lilia/mcp",
   "version": "0.1.0",
   "private": false,
   "type": "module",
   "description": "MCP server exposing Lilia Sentinel tools (evaluate, authorize, prepare, simulate, lookup) over the Lilia REST API.",
   "bin": {
-    "@lilia/mcp-server": "./src/index.ts"
+    "@lilia/mcp": "./src/index.ts"
   },
   "scripts": {
     "start": "bun run src/index.ts",

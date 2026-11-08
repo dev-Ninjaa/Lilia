@@ -2,6 +2,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import {
+  createLiliaProgram,
+  deriveTokenAccount,
+  findExtraAccountMetas,
+} from "@lilia/solana/index.ts";
+import {
   ExtensionType,
   TOKEN_2022_PROGRAM_ID,
   createAssociatedTokenAccountIdempotentInstruction,
@@ -20,11 +25,6 @@ import {
   Transaction,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
-import {
-  createLiliaProgram,
-  deriveTokenAccount,
-  findExtraAccountMetas,
-} from "../../packages/solana/src/index.ts";
 
 export const ROOT = resolve(import.meta.dir, "../..");
 export const DEVNET_DIR = resolve(ROOT, ".devnet");

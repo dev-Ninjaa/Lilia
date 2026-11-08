@@ -1,10 +1,10 @@
+import { LILIA_PROGRAM_ID, SEEDS } from "@lilia/solana/constants.ts";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { LILIA_PROGRAM_ID, SEEDS } from "./constants.ts";
 
 export function findSentinelAuthority(programId: PublicKey = LILIA_PROGRAM_ID): PublicKey {
   return PublicKey.findProgramAddressSync([SEEDS.sentinel], programId)[0];

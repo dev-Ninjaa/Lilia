@@ -1,15 +1,15 @@
-import type { FastifyPluginAsync } from "fastify";
-import { AuthorizationService } from "../../../../packages/core/src/authorization/authorization.service.ts";
-import { PermitV2Service } from "../../../../packages/core/src/authorization/permit-v2.service.ts";
-import { EvaluationService } from "../../../../packages/core/src/sentinel/evaluation.service.ts";
+import { SECURITY_RULES } from "@lilia/api/config/constants.ts";
+import { parseInput, sendSuccess } from "@lilia/api/middleware/error-handler.ts";
+import { AuthorizationService } from "@lilia/core/authorization/authorization.service.ts";
+import { PermitV2Service } from "@lilia/core/authorization/permit-v2.service.ts";
+import { EvaluationService } from "@lilia/core/sentinel/evaluation.service.ts";
 import {
   assessmentParams,
   authorizeSchema,
   authorizeV2Schema,
   evaluateSchema,
-} from "../../../../packages/schemas/src/index.ts";
-import { SECURITY_RULES } from "../config/constants.ts";
-import { parseInput, sendSuccess } from "../middleware/error-handler.ts";
+} from "@lilia/schemas/index.ts";
+import type { FastifyPluginAsync } from "fastify";
 
 const routes: FastifyPluginAsync = async (app) => {
   const service = new EvaluationService(app.db);

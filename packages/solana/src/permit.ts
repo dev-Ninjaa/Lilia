@@ -1,12 +1,12 @@
 import { randomBytes } from "node:crypto";
-import { PublicKey } from "@solana/web3.js";
 import {
   MAX_MINT_DECIMALS,
   PERMIT_V2_DOMAIN,
   PERMIT_V2_DOMAIN_LENGTH,
   PERMIT_V2_LENGTH,
   PERMIT_V2_VERSION,
-} from "./constants.ts";
+} from "@lilia/solana/constants.ts";
+import { PublicKey } from "@solana/web3.js";
 
 export type PubkeyLike = PublicKey | string;
 export type BigNumberLike = bigint | number | string;
