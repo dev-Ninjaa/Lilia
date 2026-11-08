@@ -83,7 +83,7 @@ export const SimulationLab: React.FC = () => {
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <Terminal className="w-7 h-7 text-[#FF5533]" />
+            <Terminal className="w-7 h-7 text-[#ff6b4a]" />
             Simulation Lab & Threat Demonstration
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
@@ -108,7 +108,7 @@ export const SimulationLab: React.FC = () => {
               onClick={() => runScenario(sc)}
               className={`cursor-pointer rounded-2xl p-5 border transition-all flex flex-col justify-between ${
                 isCurrent
-                  ? "bg-[#161820] border-[#FF5533] shadow-[0_0_24px_rgba(255,85,51,0.15)]"
+                  ? "bg-[#161820] border-[#ff6b4a] shadow-[0_0_24px_rgba(255,107,74,0.2)]"
                   : "bg-[#111317] border-white/[0.08] hover:border-white/[0.18]"
               }`}
             >
@@ -127,7 +127,7 @@ export const SimulationLab: React.FC = () => {
                   </span>
                   <Play
                     className={`w-4 h-4 ${
-                      isCurrent ? "text-[#FF5533] fill-[#FF5533]" : "text-neutral-500"
+                      isCurrent ? "text-[#ff6b4a] fill-[#ff6b4a]" : "text-neutral-500"
                     }`}
                   />
                 </div>
@@ -139,7 +139,7 @@ export const SimulationLab: React.FC = () => {
 
               <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between text-[11px] font-mono text-neutral-500">
                 <span>Amount: {sc.amount} USDC</span>
-                <span className="text-[#FF5533] font-semibold flex items-center gap-1">
+                <span className="text-[#ff6b4a] font-semibold flex items-center gap-1">
                   Run test →
                 </span>
               </div>
@@ -163,7 +163,7 @@ export const SimulationLab: React.FC = () => {
 
           <div className="flex items-center gap-2">
             {isRunning && (
-              <span className="flex items-center gap-1.5 text-xs text-[#FF5533] animate-pulse">
+              <span className="flex items-center gap-1.5 text-xs text-[#ff6b4a] animate-pulse">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 Executing...
               </span>
@@ -171,7 +171,7 @@ export const SimulationLab: React.FC = () => {
             <button
               onClick={() => runScenario(selectedScenario)}
               disabled={isRunning}
-              className="px-3 py-1 rounded bg-[#FF5533] text-black font-bold text-xs hover:bg-[#ff6847] disabled:opacity-50"
+              className="px-3 py-1 rounded bg-[#ff6b4a] text-black font-bold text-xs hover:bg-[#ff856b] disabled:opacity-50 cursor-pointer"
             >
               Rerun Scenario
             </button>

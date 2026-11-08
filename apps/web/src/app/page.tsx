@@ -81,7 +81,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0C0E] text-[#F9FAFB] flex flex-col font-sans selection:bg-[#FF532A] selection:text-black">
+    <div className="min-h-screen flex flex-col selection:bg-[#ff6b4a] selection:text-black" style={{ background: "#07080a", color: "#ffffff" }}>
       {/* Top Floating Modular Glass Navbar */}
       <Navbar
         currentView={currentView}
@@ -97,7 +97,7 @@ export default function Home() {
         {currentView === "landing" ? (
           <LandingPage onLaunchApp={() => setCurrentView("app")} />
         ) : (
-          <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-8">
+          <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-8 pt-24">
             {activeAppTab === "overview" && (
               <DashboardView
                 agents={agents}
