@@ -1,0 +1,91 @@
+name: Deploy (Devnet)
+
+on:
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: "Solana cluster"
+        required: true
+        default: "devnet"
+        type: choice
+        options: [devnet]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: devnet
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install Anchor CLI
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor --tag v1.2.2 anchor-cli --locked
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Restore admin keypair
+        run: |
+          mkdir -p "$HOME/.config/solana"
+          echo "$ADMIN_KEYPAIR_JSON" > "$HOME/.config/solana/id.json"
+          chmod 600 "$HOME/.config/solana/id.json"
+          solana config set --url https://api.devnet.solana.com --keypair "$HOME/.config/solana/id.json"
+        env:
+          ADMIN_KEYPAIR_JSON: ${{ secrets.ADMIN_KEYPAIR_JSON }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build the Anchor program
+        run: anchor build
+        env:
+          CARGO_BUILD_JOBS: "1"
+
+      - name: Deploy the program
+        run: anchor deploy --provider.cluster devnet
+
+      - name: Write environment
+        run: |
+          cat > .env <<EOF
+          PORT=4000
+          HOST=0.0.0.0
+          NODE_ENV=production
+          DATABASE_URL=./database/lilia.db
+          LILIA_API_KEY=${{ secrets.LILIA_API_KEY }}
+          LILIA_SIGNING_PRIVATE_KEY=${{ secrets.LILIA_SIGNING_PRIVATE_KEY }}
+          LILIA_SIGNING_PUBLIC_KEY=${{ secrets.LILIA_SIGNING_PUBLIC_KEY }}
+          GEMINI_API_KEY=
+          SOLANA_RPC_URL=https://api.devnet.solana.com
+          SOLANA_RPC_COMMITMENT=confirmed
+          LILIA_PROGRAM_ID=51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz
+          LILIA_SENTINEL_PUBLIC_KEY=
+          LILIA_ADMIN_KEYPAIR_PATH=$HOME/.config/solana/id.json
+          LILIA_PERMIT_TTL_SLOTS=300
+          LILIA_SLOT_TIME_MS=400
+          EOF
+          chmod 600 .env
+
+      - name: Migrate and start the API
+        run: |
+          bun run db:migrate
+          bun run start > api.log 2>&1 &
+          trap 'kill %1' EXIT
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4000/api/health && break
+            sleep 2
+          done
+
+      - name: Run acceptance setup and verification
+        run: |
+          bun run devnet:setup
+          bun run devnet:verify
