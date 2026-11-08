@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: lilia-api
+    runtime: docker
+    plan: starter # persistent disks need a paid plan; SQLite lives on the disk
+    healthCheckPath: /api/health
+    disk:
+      name: lilia-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        value: /var/data/lilia.db
+      - key: PORT
+        value: "4000"
+      - key: SOLANA_RPC_URL
+        value: https://api.devnet.solana.com
+      - key: SOLANA_RPC_COMMITMENT
+        value: confirmed
+      - key: LILIA_PROGRAM_ID
+        value: 51yqX5byrtqTYt1MS2cfo98UqPskzmbdW8SEBvj3FTbz
+      - key: LILIA_SENTINEL_PUBLIC_KEY
+        value: A6zGwv2xNwCHx3xTkG4W4xNM2MQN7uSDaTDRVWX5VAzf
+      # Secrets: paste the values from your local .env in the Render dashboard.
+      - key: LILIA_API_KEY
+        sync: false
+      - key: LILIA_SIGNING_PRIVATE_KEY
+        sync: false
+      - key: LILIA_SIGNING_PUBLIC_KEY
+        sync: false
+      # Optional: inline admin keypair JSON, only for on-chain admin endpoints.
+      - key: LILIA_ADMIN_KEYPAIR
+        sync: false

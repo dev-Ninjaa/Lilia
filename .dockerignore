@@ -1,0 +1,12 @@
+.env
+.env.*
+.devnet
+.git
+.vercel
+node_modules
+**/node_modules
+target
+test-ledger
+.next
+**/.next
+database/*.db*
