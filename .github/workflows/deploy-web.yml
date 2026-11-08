@@ -29,24 +29,12 @@ jobs:
           fi
       - uses: actions/checkout@v4
         if: steps.gate.outputs.run == 'true'
-      - uses: oven-sh/setup-bun@v2
-        if: steps.gate.outputs.run == 'true'
-        with:
-          bun-version: 1.4.4
       - uses: actions/setup-node@v4
         if: steps.gate.outputs.run == 'true'
         with:
           node-version: 22
-      # Same flow as running `vercel` from apps/web locally; the project's Root Directory is unset.
-      - name: Pull Vercel settings
-        if: steps.gate.outputs.run == 'true'
-        working-directory: apps/web
-        run: npx vercel@65 pull --yes --environment=production --token="$VERCEL_TOKEN"
-      - name: Build
-        if: steps.gate.outputs.run == 'true'
-        working-directory: apps/web
-        run: npx vercel@65 build --prod --token="$VERCEL_TOKEN"
+      # Vercel builds remotely with the project's own settings, same as running `vercel --prod` in apps/web.
       - name: Deploy
         if: steps.gate.outputs.run == 'true'
         working-directory: apps/web
-        run: npx vercel@65 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: npx vercel@65 deploy --prod --yes --token="$VERCEL_TOKEN"
