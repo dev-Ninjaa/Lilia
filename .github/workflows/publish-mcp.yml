@@ -15,7 +15,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # create the release and its tag
       packages: write  # Required for GitHub Packages
       
     steps:
@@ -60,7 +60,7 @@ jobs:
       - name: Update package.json version
         run: |
           cd apps/mcp
-          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --allow-same-version
 
       - name: Publish to npm
         run: |
@@ -74,7 +74,7 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@dev-Ninjaa'
+          scope: '@dev-ninjaa'
 
       - name: Publish to GitHub Packages
         run: |
@@ -82,7 +82,7 @@ jobs:
           # Backup original package.json
           cp package.json package.json.backup
           # Update package name for GitHub Packages
-          node -e "const pkg=require('./package.json'); pkg.name='@dev-Ninjaa/lilia-mcp'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+          node -e "const pkg=require('./package.json'); pkg.name='@dev-ninjaa/lilia-mcp'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
           npm publish
           # Restore original package.json
           mv package.json.backup package.json
@@ -94,7 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
+          tag_name: mcp-v${{ steps.version.outputs.VERSION }}
           release_name: MCP v${{ steps.version.outputs.VERSION }}
           body: |
             ## lilia-mcp v${{ steps.version.outputs.VERSION }}
