@@ -23,6 +23,8 @@
       "node_modules/**",
       ".next",
       ".next/**",
+      ".vercel",
+      ".vercel/**",
       "bun.lock",
       ".env.local.example"
     ]
