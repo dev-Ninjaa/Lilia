@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { env } from "@lilia/api/config/env.ts";
+import { env, repoRoot } from "@lilia/api/config/env.ts";
 import * as schema from "@lilia/db/schema/index.ts";
 import { type BunSQLiteDatabase, drizzle } from "drizzle-orm/bun-sqlite";
 import fp from "fastify-plugin";
@@ -16,7 +16,7 @@ declare module "fastify" {
 }
 
 export default fp(async (app) => {
-  const filename = resolve(env.DATABASE_URL);
+  const filename = resolve(repoRoot, env.DATABASE_URL);
   mkdirSync(dirname(filename), { recursive: true });
   const sqlite = new Database(filename, { create: true });
   sqlite.exec("PRAGMA foreign_keys = ON");

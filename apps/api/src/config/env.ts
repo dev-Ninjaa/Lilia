@@ -1,5 +1,14 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import { dirname, resolve } from "node:path";
 import { z } from "zod";
+
+/**
+ * Repo root derived from this file's location, so cwd (for example when run
+ * via Turborepo inside apps/api) does not break .env or database paths.
+ */
+export const repoRoot = resolve(dirname(new URL(import.meta.url).pathname), "../../../../");
+
+config({ path: resolve(repoRoot, ".env") });
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
