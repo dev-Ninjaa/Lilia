@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.4
       - name: Install (single root lockfile for the whole monorepo)
         run: bun install --frozen-lockfile
       - name: Build all workspaces
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.4
       - name: Install
         run: bun install --frozen-lockfile
       - name: Typecheck all workspaces
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.4
       - name: Install
         run: bun install --frozen-lockfile
       - name: Lint all workspaces
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.4
       - name: Install
         run: bun install --frozen-lockfile
       - name: TypeScript tests (Solana package)

@@ -3,11 +3,16 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { fetchEvents } from "@/lib/api/server.api";
 import { mapSecurityEvent } from "@/lib/mappers";
 import { Suspense } from "react";
+import { Unavailable } from "@/components/Unavailable";
 
 async function ThreatsData() {
+  try {
   const eventRows = await fetchEvents();
   const events = eventRows.map((row) => mapSecurityEvent(row, "System"));
   return <ThreatsTab events={events} />;
+  } catch (error) {
+    return <Unavailable message={error instanceof Error ? error.message : undefined} />;
+  }
 }
 
 export default function Page() {
