@@ -20,6 +20,7 @@ const TAB_BY_PATH: Record<string, AppTabId> = {
   threats: "threats",
   simulation: "simulation",
   integrations: "integrations",
+  settings: "settings",
 };
 
 /**

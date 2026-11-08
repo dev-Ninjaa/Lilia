@@ -7,6 +7,7 @@ import {
   Code2,
   LayoutDashboard,
   Lock,
+  Settings,
   Terminal,
   Users,
   X,
@@ -22,7 +23,8 @@ export type AppTabId =
   | "transfers"
   | "threats"
   | "simulation"
-  | "integrations";
+  | "integrations"
+  | "settings";
 
 type SidebarProps = {
   open: boolean;
@@ -42,6 +44,7 @@ const NAV: Array<{ id: AppTabId; name: string; icon: LucideIcon }> = [
   { id: "threats", name: "Threats", icon: AlertTriangle },
   { id: "simulation", name: "Simulate", icon: Terminal },
   { id: "integrations", name: "Integrate", icon: Code2 },
+  { id: "settings", name: "Settings", icon: Settings },
 ];
 
 function DiamondGlyph() {
