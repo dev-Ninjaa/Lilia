@@ -60,7 +60,8 @@ jobs:
       - name: Update package.json version
         run: |
           cd apps/mcp
-          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --allow-same-version
+          # npm version trips over the monorepo's workspace: deps, so edit the field directly
+          node -e "const f='package.json',p=JSON.parse(require('fs').readFileSync(f));p.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')" "${{ steps.version.outputs.VERSION }}"
 
       - name: Publish to npm
         run: |
